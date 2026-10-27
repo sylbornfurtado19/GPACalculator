@@ -15,13 +15,10 @@ import {
 import {
   Moon,
   Sun,
-  Download,
-  Upload,
   BookOpen,
   Check,
   GraduationCap,
   Sparkles,
-  FileText,
   FileDown,
   X,
   Trash2,
@@ -249,28 +246,6 @@ export default function AcademicHudPage() {
     setTimeout(() => setCopyToast(null), 3000);
   };
 
-  // Export transcript as clean markdown
-  const handleCopyTranscript = () => {
-    if (courses.length === 0) {
-      showToast('No subjects to export yet');
-      return;
-    }
-    let md = `# NMIMS Academic Transcript Summary\n`;
-    md += `Current SGPA: ${currentTelemetry.sgpa.toFixed(2)} / 10.00\n`;
-    md += `Total Credits: ${currentTelemetry.totalCredits} | Earned Grade Points: ${currentTelemetry.earnedGradePoints}\n\n`;
-    md += `| Code | Course Name | Type | Credits | ICA (/50) | SEE (/100) | Final % | Grade | Points |\n`;
-    md += `|---|---|---|---|---|---|---|---|---|\n`;
-
-    courses.forEach((c) => {
-      const ev = currentTelemetry.courseEvaluations[c.id];
-      md += `| ${c.code} | ${c.name} | ${c.type} | ${c.credits} | ${c.icaMarks} | ${c.type === 'standard' ? c.seeMarks : 'N/A'} | ${ev?.finalPercentage ?? 0}% | ${ev?.grade ?? 'F'} | ${ev?.gradePoints ?? 0} |\n`;
-    });
-
-    navigator.clipboard.writeText(md).then(() => {
-      showToast('Transcript copied in Markdown format');
-    });
-  };
-
   // Export official NMIMS PDF grade card report
   const handleExportPdf = () => {
     if (courses.length === 0) {
@@ -284,41 +259,6 @@ export default function AcademicHudPage() {
       console.error('Failed to generate PDF', err);
       showToast('Failed to export PDF');
     }
-  };
-
-  // Export JSON configuration
-  const handleExportJson = () => {
-    if (courses.length === 0) {
-      showToast('No subjects to export');
-      return;
-    }
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(courses, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `nmims_gpa_plan_${Date.now()}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    showToast('Curriculum JSON exported successfully');
-  };
-
-  // Import JSON configuration
-  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (Array.isArray(parsed)) {
-          setCourses(parsed);
-          showToast('Imported courses successfully');
-        }
-      } catch (err) {
-        showToast('Invalid JSON file format');
-      }
-    };
-    reader.readAsText(file);
   };
 
   // Reset confirmation dialog state
@@ -373,13 +313,6 @@ export default function AcademicHudPage() {
             >
               <FileDown className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" />
               <span>Export PDF</span>
-            </button>
-            <button
-              onClick={handleCopyTranscript}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Copy Markdown</span>
             </button>
           </nav>
 
@@ -526,7 +459,7 @@ export default function AcademicHudPage() {
             <span>Dynamic Programming GPA Engine</span>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center">
             <button
               onClick={handleExportPdf}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
@@ -534,24 +467,6 @@ export default function AcademicHudPage() {
               <FileDown className="w-3.5 h-3.5" />
               <span>Export PDF</span>
             </button>
-            <span className="text-slate-300 dark:text-neutral-700">|</span>
-            <button
-              onClick={handleExportJson}
-              className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-[11px]"
-              title="Backup JSON"
-            >
-              <span>Backup JSON</span>
-            </button>
-            <span className="text-slate-300 dark:text-neutral-700">|</span>
-            <label className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-[11px]" title="Restore JSON">
-              <span>Import JSON</span>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportJson}
-                className="hidden"
-              />
-            </label>
           </div>
         </footer>
       </main>
