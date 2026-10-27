@@ -304,11 +304,15 @@ export default function AcademicHudPage() {
     reader.readAsText(file);
   };
 
+  // Reset confirmation dialog state
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   // Reset to clean empty state (wipes stored data)
   const handleReset = () => {
     setCourses([]);
     setActiveScenario('none');
     setIsGhostModeActive(false);
+    setShowResetConfirm(false);
     localStorage.removeItem('nmims_user_courses');
     localStorage.removeItem('nmims_hud_courses');
     showToast('Cleared all subjects. Clean slate ready!');
@@ -319,16 +323,17 @@ export default function AcademicHudPage() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#090A0F] text-slate-900 dark:text-[#EDEDED] font-sans antialiased transition-colors duration-150">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#F8F9FA]/85 dark:bg-[#090A0F]/85 border-b border-slate-200/80 dark:border-white/[0.08] px-4 md:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#F8F9FA]/90 dark:bg-[#090A0F]/85 border-b border-slate-200/80 dark:border-white/[0.08] px-3 sm:px-6 md:px-8 py-2.5 sm:py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand Wordmark */}
-          <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
-              <GraduationCap className="w-4 h-4" />
+          <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
               <span className="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white block">
-                NMIMS GPA Engine
+                <span className="sm:hidden">NMIMS GPA</span>
+                <span className="hidden sm:inline">NMIMS GPA Engine</span>
               </span>
               <span className="text-[10px] text-slate-500 dark:text-neutral-400 hidden sm:block">
                 Autonomous NMIMS Evaluation & Target Optimizer
@@ -361,7 +366,7 @@ export default function AcademicHudPage() {
               className="md:hidden p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-neutral-300 transition-all cursor-pointer"
               title="View grading scale"
             >
-              <BookOpen className="w-4 h-4" />
+              <BookOpen className="w-3.5 h-3.5" />
             </button>
 
             <button
@@ -369,22 +374,22 @@ export default function AcademicHudPage() {
               className="p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-neutral-300 transition-all cursor-pointer"
               title={theme === 'dark' ? 'Switch to off-white light theme' : 'Switch to dark theme'}
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
 
             {courses.length > 0 && (
               <button
-                onClick={handleReset}
+                onClick={() => setShowResetConfirm(true)}
                 className="p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-slate-200 dark:border-white/[0.08] text-slate-700 hover:text-rose-600 dark:text-neutral-300 dark:hover:text-rose-400 transition-all cursor-pointer"
                 title="Clear all subjects"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
 
             <button
               onClick={() => setIsGhostModeActive(!isGhostModeActive)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 isGhostModeActive
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-cyan-500 dark:text-black'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] dark:text-neutral-200 dark:border-white/[0.1]'
@@ -397,6 +402,34 @@ export default function AcademicHudPage() {
           </div>
         </div>
       </header>
+
+      {/* Clear Confirmation Modal for Mobile/Desktop */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-[#11131A] border border-slate-200 dark:border-white/[0.12] shadow-2xl p-5 space-y-3">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Clear All Subjects?
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-neutral-400 leading-relaxed">
+              This will remove all entered subjects from your device. You can start fresh with new courses.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-neutral-300 dark:hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReset}
+                className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-all cursor-pointer"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Viewport */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6">

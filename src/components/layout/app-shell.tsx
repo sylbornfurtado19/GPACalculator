@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isHome = pathname === "/";
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <AcademicProvider>
         {isHome ? (
           children
