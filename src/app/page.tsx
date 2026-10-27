@@ -22,9 +22,11 @@ import {
   GraduationCap,
   Sparkles,
   FileText,
+  FileDown,
   X,
   Trash2,
 } from 'lucide-react';
+import { generateAcademicPdf } from '../lib/pdf-export';
 
 export default function AcademicHudPage() {
   // Theme state: defaults to off-white 'light'
@@ -269,6 +271,21 @@ export default function AcademicHudPage() {
     });
   };
 
+  // Export official NMIMS PDF grade card report
+  const handleExportPdf = () => {
+    if (courses.length === 0) {
+      showToast('Add subjects first to export a PDF report');
+      return;
+    }
+    try {
+      generateAcademicPdf(courses, currentTelemetry);
+      showToast('Downloaded NMIMS Grade Report PDF!');
+    } catch (err) {
+      console.error('Failed to generate PDF', err);
+      showToast('Failed to export PDF');
+    }
+  };
+
   // Export JSON configuration
   const handleExportJson = () => {
     if (courses.length === 0) {
@@ -342,13 +359,20 @@ export default function AcademicHudPage() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-5 text-xs text-slate-600 dark:text-neutral-400 font-medium">
+          <nav className="hidden md:flex items-center gap-4 text-xs text-slate-600 dark:text-neutral-400 font-medium">
             <button
               onClick={() => setShowScaleModal(true)}
               className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Grading Scale</span>
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-neutral-200 border border-indigo-200/80 dark:border-white/[0.08] font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              <FileDown className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" />
+              <span>Export PDF</span>
             </button>
             <button
               onClick={handleCopyTranscript}
@@ -367,6 +391,14 @@ export default function AcademicHudPage() {
               title="View grading scale"
             >
               <BookOpen className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={handleExportPdf}
+              className="md:hidden p-2 rounded-xl bg-indigo-50 dark:bg-cyan-500/10 hover:bg-indigo-100 border border-indigo-200 dark:border-cyan-500/20 text-indigo-700 dark:text-cyan-400 transition-all cursor-pointer"
+              title="Export PDF Grade Card"
+            >
+              <FileDown className="w-3.5 h-3.5" />
             </button>
 
             <button
@@ -486,7 +518,7 @@ export default function AcademicHudPage() {
           targetPlan={targetPlan}
         />
 
-        {/* Subtle Footer Bar */}
+        {/* Subtle Footer Bar with Real PDF Export */}
         <footer className="mt-2 pt-4 border-t border-slate-200/80 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-neutral-400">
           <div className="flex items-center gap-2">
             <span>NMIMS Autonomous Academic Standards</span>
@@ -494,17 +526,24 @@ export default function AcademicHudPage() {
             <span>Dynamic Programming GPA Engine</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
-              onClick={handleExportJson}
-              className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              onClick={handleExportPdf}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xs transition-all cursor-pointer active:scale-95"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export JSON</span>
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Export PDF</span>
             </button>
             <span className="text-slate-300 dark:text-neutral-700">|</span>
-            <label className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
-              <Upload className="w-3.5 h-3.5" />
+            <button
+              onClick={handleExportJson}
+              className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-[11px]"
+              title="Backup JSON"
+            >
+              <span>Backup JSON</span>
+            </button>
+            <span className="text-slate-300 dark:text-neutral-700">|</span>
+            <label className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-[11px]" title="Restore JSON">
               <span>Import JSON</span>
               <input
                 type="file"
