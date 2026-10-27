@@ -519,67 +519,7 @@ export function optimizeForTargetSgpa(
 }
 
 /**
- * Standard NMIMS engineering sample semester curriculum
+ * Default course roster starts completely empty - user adds their own subjects
  */
-export const DEFAULT_NMIMS_COURSES: Course[] = [
-  {
-    id: 'c-1',
-    code: 'CS401',
-    name: 'Design & Analysis of Algorithms',
-    type: 'standard',
-    credits: 4,
-    icaMarks: 38,
-    seeMarks: 72,
-    isLocked: false,
-  },
-  {
-    id: 'c-2',
-    code: 'CS402',
-    name: 'Computer Architecture & Org',
-    type: 'standard',
-    credits: 3,
-    icaMarks: 34,
-    seeMarks: 64,
-    isLocked: false,
-  },
-  {
-    id: 'c-3',
-    code: 'MA401',
-    name: 'Applied Linear Algebra & Stats',
-    type: 'standard',
-    credits: 4,
-    icaMarks: 41,
-    seeMarks: 82,
-    isLocked: false,
-  },
-  {
-    id: 'c-4',
-    code: 'CS403',
-    name: 'Database Management Systems',
-    type: 'standard',
-    credits: 3,
-    icaMarks: 36,
-    seeMarks: 68,
-    isLocked: false,
-  },
-  {
-    id: 'c-5',
-    code: 'CS404L',
-    name: 'Full-Stack Systems Lab',
-    type: 'ica_only',
-    credits: 2,
-    icaMarks: 44,
-    seeMarks: 0,
-    isLocked: false,
-  },
-  {
-    id: 'c-6',
-    code: 'HM401',
-    name: 'Professional Ethics & Law',
-    type: 'standard',
-    credits: 2,
-    icaMarks: 35,
-    seeMarks: 60,
-    isLocked: false,
-  },
-];
+export const DEFAULT_NMIMS_COURSES: Course[] = [];
+

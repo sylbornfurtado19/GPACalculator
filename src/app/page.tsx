@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Course,
-  DEFAULT_NMIMS_COURSES,
   computeSemesterTelemetry,
   optimizeForTargetSgpa,
   GRADE_SCALE,
@@ -16,46 +15,52 @@ import {
 import {
   Moon,
   Sun,
-  RotateCcw,
   Download,
   Upload,
   BookOpen,
   Check,
   GraduationCap,
   Sparkles,
-  Layers,
   FileText,
   X,
   Trash2,
 } from 'lucide-react';
 
 export default function AcademicHudPage() {
-  // Theme state: defaults to elegant off-white 'light'
+  // Theme state: defaults to off-white 'light'
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nmims_hud_theme');
-      return (saved as 'dark' | 'light') || 'light';
+      const saved = localStorage.getItem('nmims_user_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
     }
     return 'light';
   });
 
-  // Active courses state - defaults to clean EMPTY state []
+  // Active courses state - strictly user's own data saved locally on laptop
   const [courses, setCourses] = useState<Course[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nmims_hud_courses');
+      // 1. Immediately purge legacy demo storage keys
+      localStorage.removeItem('nmims_hud_courses');
+
+      // 2. Load the user's authentic personal courses
+      const saved = localStorage.getItem('nmims_user_courses');
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            // Check if this was the unwanted old preset data (e.g. CS301 Algorithm Design)
-            const isOldPreset =
-              parsed.length === 6 &&
-              parsed.some(
-                (c) => c.code === 'CS301' && c.name?.includes('Algorithm Design')
-              );
-            if (!isOldPreset) {
-              return parsed;
-            }
+            // Filter out any unwanted old demo subjects (e.g. CS401 Algorithms, CS402, etc.)
+            const authentic = parsed.filter(
+              (c) =>
+                !(
+                  (c.code === 'CS401' && c.name?.includes('Algorithms')) ||
+                  (c.code === 'CS402' && c.name?.includes('Architecture')) ||
+                  (c.code === 'MA401' && c.name?.includes('Linear Algebra')) ||
+                  (c.code === 'CS403' && c.name?.includes('Database')) ||
+                  (c.code === 'CS404L' && c.name?.includes('Systems Lab')) ||
+                  (c.code === 'HM401' && c.name?.includes('Ethics'))
+                )
+            );
+            return authentic;
           }
         } catch (e) {
           console.error('Failed to parse saved courses', e);
@@ -68,7 +73,7 @@ export default function AcademicHudPage() {
   // Target SGPA state (defaults to 8.5)
   const [targetSgpa, setTargetSgpa] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nmims_hud_target');
+      const saved = localStorage.getItem('nmims_user_target');
       if (saved) {
         const val = parseFloat(saved);
         if (!isNaN(val)) return val;
@@ -85,10 +90,9 @@ export default function AcademicHudPage() {
 
   // Modal / Drawer states
   const [showScaleModal, setShowScaleModal] = useState<boolean>(false);
-  const [showPresetModal, setShowPresetModal] = useState<boolean>(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
 
-  // Sync theme to document
+  // Sync theme to document and persist locally
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -98,17 +102,17 @@ export default function AcademicHudPage() {
       root.classList.add('light');
       root.classList.remove('dark');
     }
-    localStorage.setItem('nmims_hud_theme', theme);
+    localStorage.setItem('nmims_user_theme', theme);
   }, [theme]);
 
-  // Persist courses to localStorage
+  // Persist user's courses to localStorage on laptop in real-time
   useEffect(() => {
-    localStorage.setItem('nmims_hud_courses', JSON.stringify(courses));
+    localStorage.setItem('nmims_user_courses', JSON.stringify(courses));
   }, [courses]);
 
-  // Persist target to localStorage
+  // Persist target to localStorage on laptop in real-time
   useEffect(() => {
-    localStorage.setItem('nmims_hud_target', targetSgpa.toString());
+    localStorage.setItem('nmims_user_target', targetSgpa.toString());
   }, [targetSgpa]);
 
   // Compute what-if simulated courses
@@ -160,7 +164,7 @@ export default function AcademicHudPage() {
     return optimizeForTargetSgpa(courses, targetSgpa);
   }, [courses, targetSgpa]);
 
-  // Handlers for modifying courses
+  // Handlers for modifying courses (stored in localStorage automatically)
   const handleUpdateCourse = useCallback((id: string, updates: Partial<Course>) => {
     setCourses((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
@@ -221,7 +225,7 @@ export default function AcademicHudPage() {
     showToast('Applied Target Plan to Subjects!');
   }, [targetPlan]);
 
-  // Keyboard shortcut Cmd+K to apply target plan
+  // Keyboard shortcut Cmd+K / Ctrl+K to apply target plan
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -300,11 +304,12 @@ export default function AcademicHudPage() {
     reader.readAsText(file);
   };
 
-  // Reset to clean empty state (no preset dummy data)
+  // Reset to clean empty state (wipes stored data)
   const handleReset = () => {
     setCourses([]);
     setActiveScenario('none');
     setIsGhostModeActive(false);
+    localStorage.removeItem('nmims_user_courses');
     localStorage.removeItem('nmims_hud_courses');
     showToast('Cleared all subjects. Clean slate ready!');
   };
@@ -326,7 +331,7 @@ export default function AcademicHudPage() {
                 NMIMS GPA Engine
               </span>
               <span className="text-[10px] text-slate-500 dark:text-neutral-400 hidden sm:block">
-                Exact NMIMS Evaluation & Target Optimizer
+                Autonomous NMIMS Evaluation & Target Optimizer
               </span>
             </div>
           </div>
@@ -339,13 +344,6 @@ export default function AcademicHudPage() {
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Grading Scale</span>
-            </button>
-            <button
-              onClick={() => setShowPresetModal(true)}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Sample Curriculums</span>
             </button>
             <button
               onClick={handleCopyTranscript}
@@ -537,91 +535,6 @@ export default function AcademicHudPage() {
                 <span className="text-indigo-600 dark:text-cyan-400 font-bold">•</span>
                 <span><strong>ICA-Only Course:</strong> Final % = ICA × 2. Passing condition: ICA ≥ 20.</span>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preset Curriculums Modal (Optional, user initiates) */}
-      {showPresetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#11131A] border border-slate-200 dark:border-white/[0.12] shadow-2xl p-5 sm:p-6 relative">
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-white/[0.08] mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 flex items-center justify-center text-indigo-600 dark:text-cyan-400">
-                  <Layers className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Sample Curriculum Presets
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowPresetModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              <button
-                onClick={() => {
-                  setCourses(DEFAULT_NMIMS_COURSES);
-                  setShowPresetModal(false);
-                  showToast('Loaded NMIMS Computer Engineering Sample');
-                }}
-                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
-              >
-                <div className="text-xs font-bold text-slate-900 dark:text-white">
-                  NMIMS B.Tech CS/IT (Sem 4)
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-                  6 Courses · 18 Credits · Algorithms, OS, Architecture, Linear Algebra
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCourses([
-                    { id: 'ec-1', code: 'EC301', name: 'Signals & Systems', type: 'standard', credits: 4, icaMarks: 36, seeMarks: 70, isLocked: false },
-                    { id: 'ec-2', code: 'EC302', name: 'Analog Circuit Design', type: 'standard', credits: 4, icaMarks: 34, seeMarks: 65, isLocked: false },
-                    { id: 'ec-3', code: 'EC303', name: 'Digital Logic & FPGA', type: 'standard', credits: 3, icaMarks: 40, seeMarks: 78, isLocked: false },
-                    { id: 'ec-4', code: 'EC304L', name: 'Embedded Hardware Lab', type: 'ica_only', credits: 2, icaMarks: 45, seeMarks: 0, isLocked: false },
-                    { id: 'ec-5', code: 'MA301', name: 'Probability & Random Processes', type: 'standard', credits: 3, icaMarks: 38, seeMarks: 74, isLocked: false },
-                  ]);
-                  setShowPresetModal(false);
-                  showToast('Loaded NMIMS Electronics Sample');
-                }}
-                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
-              >
-                <div className="text-xs font-bold text-slate-900 dark:text-white">
-                  NMIMS Electronics / EXTC (Sem 3)
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-                  5 Courses · 16 Credits · Signals, Analog Circuits, Embedded Lab
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setCourses([
-                    { id: 'mb-1', code: 'MT501', name: 'Enterprise Architecture & Cloud', type: 'standard', credits: 3, icaMarks: 42, seeMarks: 80, isLocked: false },
-                    { id: 'mb-2', code: 'MT502', name: 'Financial Analytics & Valuation', type: 'standard', credits: 4, icaMarks: 38, seeMarks: 75, isLocked: false },
-                    { id: 'mb-3', code: 'MT503', name: 'Product Management Studio', type: 'ica_only', credits: 3, icaMarks: 46, seeMarks: 0, isLocked: false },
-                    { id: 'mb-4', code: 'MT504', name: 'Supply Chain Optimization', type: 'standard', credits: 3, icaMarks: 35, seeMarks: 68, isLocked: false },
-                  ]);
-                  setShowPresetModal(false);
-                  showToast('Loaded NMIMS MBA Tech Sample');
-                }}
-                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
-              >
-                <div className="text-xs font-bold text-slate-900 dark:text-white">
-                  NMIMS MBA Tech / Management (Sem 5)
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
-                  4 Courses · 13 Credits · Financial Analytics, PM Studio, Cloud
-                </div>
-              </button>
             </div>
           </div>
         </div>
