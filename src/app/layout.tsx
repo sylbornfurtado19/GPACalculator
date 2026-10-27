@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GPA Calculator | NMIMS Academic Planner",
+  title: "NMIMS Academic HUD - GPA Engine",
   description:
-    "Interactive SGPA estimator and target GPA planner for NMIMS students with official grading scales and reverse mark optimization.",
+    "Hyper-minimalist, command-center academic telemetry HUD and exact dynamic programming GPA optimizer for NMIMS students.",
 };
 
 export default function RootLayout({

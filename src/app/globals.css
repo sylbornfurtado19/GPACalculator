@@ -1,84 +1,95 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --bg-main: #F7F6F2;
-  --bg-card: #FFFFFF;
-  --bg-surface: #F0EFEA;
-  --bg-surface-hover: #E8E7E0;
-  --text-primary: #17191F;
-  --text-secondary: #686B75;
-  --text-muted: #8E929D;
-  --border-color: #E5E3DC;
-  --border-subtle: #ECEAE4;
-  --primary: #356AE6;
-  --primary-hover: #2957C4;
-  --primary-subtle: #EBF1FF;
-  --accent: #6A8DFF;
-  
-  --success: #16A34A;
-  --success-bg: #DCFCE7;
-  --warning: #D97706;
-  --warning-bg: #FEF3C7;
-  --danger: #DC2626;
-  --danger-bg: #FEE2E2;
+@layer base {
+  :root {
+    --bg-canvas: #090a0f;
+    --bg-surface: #11131a;
+    --bg-surface-elevated: #161922;
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-hover: rgba(255, 255, 255, 0.14);
+    --text-primary: #ededed;
+    --text-secondary: #8a8f98;
+    --text-muted: #565b65;
+    --accent-cyan: #06b6d4;
+    --accent-cyan-glow: rgba(6, 182, 212, 0.15);
+    --accent-indigo: #6366f1;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+  }
 
-  --shadow-sm: 0 1px 2px 0 rgba(23, 25, 31, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(23, 25, 31, 0.07), 0 2px 4px -2px rgba(23, 25, 31, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(23, 25, 31, 0.08), 0 4px 6px -4px rgba(23, 25, 31, 0.04);
+  .light {
+    --bg-canvas: #f9f9f8;
+    --bg-surface: #ffffff;
+    --bg-surface-elevated: #f3f3f1;
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.16);
+    --text-primary: #121316;
+    --text-secondary: #575a61;
+    --text-muted: #8c8f96;
+    --accent-cyan: #0891b2;
+    --accent-cyan-glow: rgba(8, 145, 178, 0.12);
+    --accent-indigo: #4f46e5;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --accent-rose: #e11d48;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.011em;
+  }
+
+  /* Enforce tabular figures for all numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
-.dark {
-  --bg-main: #0B0D12;
-  --bg-card: #131720;
-  --bg-surface: #1A202C;
-  --bg-surface-hover: #232B3B;
-  --text-primary: #F4F6FA;
-  --text-secondary: #9CA6B8;
-  --text-muted: #64748B;
-  --border-color: #272F3D;
-  --border-subtle: #1E2532;
-  --primary: #5685FF;
-  --primary-hover: #4070F0;
-  --primary-subtle: #172445;
-  --accent: #6EC8FF;
-
-  --success: #22C55E;
-  --success-bg: #143220;
-  --warning: #F59E0B;
-  --warning-bg: #38280B;
-  --danger: #EF4444;
-  --danger-bg: #361717;
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+/* Scrubbable cell indicator animation */
+.scrub-active {
+  cursor: ew-resize !important;
+  user-select: none !important;
 }
 
-body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* Hide native number spinners */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Laser Cyan Ghost Pulse */
+@keyframes laser-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.3), 0 0 16px -2px rgba(6, 182, 212, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.6), 0 0 24px 0px rgba(6, 182, 212, 0.4);
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.laser-projector {
+  animation: laser-breathe 2.8s ease-in-out infinite;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 9999px;
+/* Hairline borders */
+.hairline-b {
+  border-bottom: 1px solid var(--border-subtle);
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+.hairline-t {
+  border-top: 1px solid var(--border-subtle);
+}
+.hairline-r {
+  border-right: 1px solid var(--border-subtle);
+}
+.hairline-all {
+  border: 1px solid var(--border-subtle);
 }
