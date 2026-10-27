@@ -1,8 +1,20 @@
 import { describe, it, expect } from "vitest";
 import { evaluateSubject, getGradeForPercentage } from "../grading";
-import { calculateSgpa, analyzeNextGradeOpportunity } from "../gpa";
+import { calculateSgpa } from "../gpa";
 import { optimizeTargetSgpa } from "../target-optimizer";
-import { validateExportJson, SubjectSchema } from "../validation";
+import { validateExportJson } from "../validation";
+import {
+  evaluateCourse,
+  computeSemesterTelemetry,
+  optimizeForTargetSgpa,
+  Course,
+} from "../gpa-engine";
+import {
+  loadStoredData,
+  saveStoredData,
+  clearStoredData,
+  generateExportJson,
+} from "../storage";
 import { Subject } from "@/types/academic";
 
 describe("NMIMS Grading Rules - Standard Courses", () => {
@@ -444,5 +456,282 @@ describe("Validation and Serialization", () => {
     const val = validateExportJson(invalidJson);
     expect(val.success).toBe(false);
     expect(val.error).toBeDefined();
+  });
+});
+
+describe("GPA Engine - Boundary Conditions & Passing Thresholds", () => {
+  it("verifies all exact grade boundaries: 39.99, 40, 49.99, 50, 54.99, 55, 59.99, 60, 69.99, 70, 79.99, 80, 89.99, 90", () => {
+    const boundaries: { ica: number; see: number; expectedGrade: string; expectedPoints: number }[] = [
+      { ica: 20, see: 39.98, expectedGrade: "F", expectedPoints: 0 }, // 39.99% -> F
+      { ica: 20, see: 40, expectedGrade: "P", expectedPoints: 4 }, // 40.0% -> P
+      { ica: 20, see: 59.98, expectedGrade: "P", expectedPoints: 4 }, // 49.99% -> P
+      { ica: 20, see: 60, expectedGrade: "C", expectedPoints: 5 }, // 50.0% -> C
+      { ica: 25, see: 59.98, expectedGrade: "C", expectedPoints: 5 }, // 54.99% -> C
+      { ica: 25, see: 60, expectedGrade: "B", expectedPoints: 6 }, // 55.0% -> B
+      { ica: 25, see: 69.98, expectedGrade: "B", expectedPoints: 6 }, // 59.99% -> B
+      { ica: 25, see: 70, expectedGrade: "B+", expectedPoints: 7 }, // 60.0% -> B+
+      { ica: 30, see: 79.98, expectedGrade: "B+", expectedPoints: 7 }, // 69.99% -> B+
+      { ica: 30, see: 80, expectedGrade: "A", expectedPoints: 8 }, // 70.0% -> A
+      { ica: 35, see: 89.98, expectedGrade: "A", expectedPoints: 8 }, // 79.99% -> A
+      { ica: 35, see: 90, expectedGrade: "A+", expectedPoints: 9 }, // 80.0% -> A+
+      { ica: 40, see: 99.98, expectedGrade: "A+", expectedPoints: 9 }, // 89.99% -> A+
+      { ica: 40, see: 100, expectedGrade: "O", expectedPoints: 10 }, // 90.0% -> O
+    ];
+
+    for (const b of boundaries) {
+      const c: Course = {
+        id: `test-b-${b.ica}-${b.see}`,
+        code: "TEST",
+        name: "Test Boundary",
+        type: "standard",
+        credits: 3,
+        icaMarks: b.ica,
+        seeMarks: b.see,
+        isLocked: false,
+      };
+      const ev = evaluateCourse(c);
+      expect(ev.grade).toBe(b.expectedGrade);
+      expect(ev.gradePoints).toBe(b.expectedPoints);
+    }
+  });
+
+  it("verifies standard-course ICA and SEE passing thresholds independently", () => {
+    // ICA = 19 (fails threshold < 20) even with SEE = 100
+    const failIca: Course = {
+      id: "c-fail-ica",
+      code: "FICA",
+      name: "Fail ICA",
+      type: "standard",
+      credits: 4,
+      icaMarks: 19,
+      seeMarks: 100,
+      isLocked: false,
+    };
+    const ev1 = evaluateCourse(failIca);
+    expect(ev1.isPassed).toBe(false);
+    expect(ev1.grade).toBe("F");
+    expect(ev1.gradePoints).toBe(0);
+    expect(ev1.isIcaPassed).toBe(false);
+    expect(ev1.isSeePassed).toBe(true);
+
+    // SEE = 39 (fails threshold < 40) even with ICA = 50
+    const failSee: Course = {
+      id: "c-fail-see",
+      code: "FSEE",
+      name: "Fail SEE",
+      type: "standard",
+      credits: 4,
+      icaMarks: 50,
+      seeMarks: 39,
+      isLocked: false,
+    };
+    const ev2 = evaluateCourse(failSee);
+    expect(ev2.isPassed).toBe(false);
+    expect(ev2.grade).toBe("F");
+    expect(ev2.gradePoints).toBe(0);
+    expect(ev2.isIcaPassed).toBe(true);
+    expect(ev2.isSeePassed).toBe(false);
+
+    // Both pass at boundary: ICA = 20, SEE = 40
+    const passBoth: Course = {
+      id: "c-pass-both",
+      code: "PASS",
+      name: "Pass Boundary",
+      type: "standard",
+      credits: 4,
+      icaMarks: 20,
+      seeMarks: 40,
+      isLocked: false,
+    };
+    const ev3 = evaluateCourse(passBoth);
+    expect(ev3.isPassed).toBe(true);
+    expect(ev3.grade).toBe("P");
+    expect(ev3.gradePoints).toBe(4);
+  });
+
+  it("verifies ICA-only courses double marks and do not require SEE", () => {
+    const icaOnly: Course = {
+      id: "c-lab",
+      code: "LAB",
+      name: "Hardware Lab",
+      type: "ica_only",
+      credits: 2,
+      icaMarks: 45,
+      seeMarks: 0,
+      isLocked: false,
+    };
+    const ev = evaluateCourse(icaOnly);
+    expect(ev.finalPercentage).toBe(90);
+    expect(ev.grade).toBe("O");
+    expect(ev.gradePoints).toBe(10);
+    expect(ev.isPassed).toBe(true);
+    expect(ev.isSeePassed).toBe(true);
+  });
+
+  it("calculates weighted SGPA with different credit weights (1 to 5 credits) and failing subjects", () => {
+    const roster: Course[] = [
+      { id: "1", code: "C1", name: "Sub 1", credits: 1, type: "standard", icaMarks: 45, seeMarks: 90, isLocked: false }, // 90% -> O (10) -> 10 pts
+      { id: "2", code: "C2", name: "Sub 2", credits: 2, type: "standard", icaMarks: 40, seeMarks: 80, isLocked: false }, // 80% -> A+ (9) -> 18 pts
+      { id: "3", code: "C3", name: "Sub 3", credits: 3, type: "standard", icaMarks: 35, seeMarks: 70, isLocked: false }, // 70% -> A (8) -> 24 pts
+      { id: "4", code: "C4", name: "Sub 4", credits: 4, type: "standard", icaMarks: 30, seeMarks: 60, isLocked: false }, // 60% -> B+ (7) -> 28 pts
+      { id: "5", code: "C5", name: "Sub 5", credits: 5, type: "standard", icaMarks: 15, seeMarks: 80, isLocked: false }, // Fails ICA (<20) -> F (0) -> 0 pts
+    ];
+
+    // Total credits = 1 + 2 + 3 + 4 + 5 = 15
+    // Earned Grade points = 10 + 18 + 24 + 28 + 0 = 80
+    // SGPA = 80 / 15 = 5.33
+    const telemetry = computeSemesterTelemetry(roster);
+    expect(telemetry.totalCredits).toBe(15);
+    expect(telemetry.earnedGradePoints).toBe(80);
+    expect(telemetry.sgpa).toBe(5.33);
+    expect(telemetry.hasFailures).toBe(true);
+    expect(telemetry.failedCoursesCount).toBe(1);
+    expect(telemetry.passingCredits).toBe(10);
+  });
+});
+
+describe("GPA Engine Dynamic Programming Optimizer", () => {
+  it("optimizes for high SGPA (9.0) and independently satisfies all constraints", () => {
+    const courses: Course[] = [
+      { id: "c1", code: "SUB1", name: "Sub 1", credits: 4, type: "standard", icaMarks: 35, seeMarks: 65, isLocked: false },
+      { id: "c2", code: "SUB2", name: "Sub 2", credits: 3, type: "standard", icaMarks: 35, seeMarks: 65, isLocked: false },
+      { id: "c3", code: "LAB1", name: "Lab 1", credits: 2, type: "ica_only", icaMarks: 35, seeMarks: 0, isLocked: false },
+    ];
+
+    const plan = optimizeForTargetSgpa(courses, 9.0);
+    expect(plan.feasible).toBe(true);
+    expect(plan.projectedSgpa).toBeGreaterThanOrEqual(9.0);
+
+    // Apply recommendations and independently evaluate
+    const simulated = courses.map((c) => {
+      const rec = plan.recommendations[c.id];
+      return {
+        ...c,
+        icaMarks: rec.recommendedIca,
+        seeMarks: c.type === "standard" ? rec.recommendedSee : 0,
+      };
+    });
+
+    const evaluated = computeSemesterTelemetry(simulated);
+    expect(evaluated.sgpa).toBeGreaterThanOrEqual(9.0);
+    expect(evaluated.hasFailures).toBe(false);
+
+    // Verify mark boundaries
+    simulated.forEach((c) => {
+      expect(c.icaMarks).toBeGreaterThanOrEqual(20);
+      expect(c.icaMarks).toBeLessThanOrEqual(50);
+      if (c.type === "standard") {
+        expect(c.seeMarks).toBeGreaterThanOrEqual(40);
+        expect(c.seeMarks).toBeLessThanOrEqual(100);
+      }
+    });
+  });
+
+  it("respects locked courses and does not modify locked marks", () => {
+    const courses: Course[] = [
+      { id: "c1", code: "SUB1", name: "Sub 1", credits: 4, type: "standard", icaMarks: 30, seeMarks: 60, isLocked: true },
+      { id: "c2", code: "SUB2", name: "Sub 2", credits: 4, type: "standard", icaMarks: 35, seeMarks: 65, isLocked: false },
+    ];
+
+    const plan = optimizeForTargetSgpa(courses, 8.0);
+    expect(plan.feasible).toBe(true);
+    // c1 is locked: recommended marks must not change
+    expect(plan.recommendations["c1"]).toBeUndefined();
+    expect(plan.recommendations["c2"]).toBeDefined();
+  });
+
+  it("returns feasible: false when a locked course is failing", () => {
+    const courses: Course[] = [
+      { id: "c1", code: "SUB1", name: "Failing Locked Sub", credits: 4, type: "standard", icaMarks: 18, seeMarks: 50, isLocked: true },
+      { id: "c2", code: "SUB2", name: "Sub 2", credits: 4, type: "standard", icaMarks: 35, seeMarks: 65, isLocked: false },
+    ];
+
+    const plan = optimizeForTargetSgpa(courses, 7.0);
+    expect(plan.feasible).toBe(false);
+    expect(plan.message).toContain("failing passing minimums");
+  });
+
+  it("returns feasible: false when target exceeds 10.00", () => {
+    const courses: Course[] = [
+      { id: "c1", code: "SUB1", name: "Sub 1", credits: 4, type: "standard", icaMarks: 35, seeMarks: 65, isLocked: false },
+    ];
+
+    const plan = optimizeForTargetSgpa(courses, 10.5);
+    expect(plan.feasible).toBe(false);
+    expect(plan.message).toContain("exceeds maximum possible SGPA");
+  });
+});
+
+describe("Storage Persistence & Data Bridging", () => {
+  it("generates and parses export JSON correctly", () => {
+    const state = {
+      version: 1,
+      semesterLabel: "Semester 4",
+      targetSgpa: 8.75,
+      subjects: [
+        {
+          id: "s1",
+          name: "Algorithms",
+          code: "CS401",
+          credits: 4,
+          courseType: "standard" as const,
+          icaMarks: 40,
+          icaMax: 50,
+          seeMarks: 80,
+          seeMax: 100,
+        },
+      ],
+      appliedHistory: [],
+    };
+
+    const json = generateExportJson(state);
+    const parsed = JSON.parse(json);
+    expect(parsed.semesterLabel).toBe("Semester 4");
+    expect(parsed.targetSgpa).toBe(8.75);
+    expect(parsed.subjects.length).toBe(1);
+    expect(parsed.subjects[0].name).toBe("Algorithms");
+  });
+
+  it("saves, loads, and clears data via storage helper", () => {
+    const mockStorage: Record<string, string> = {};
+    const originalWindow = globalThis.window;
+    (globalThis as unknown as { window: unknown }).window = {
+      localStorage: {
+        getItem: (k: string) => mockStorage[k] || null,
+        setItem: (k: string, v: string) => { mockStorage[k] = v; },
+        removeItem: (k: string) => { delete mockStorage[k]; },
+      },
+    };
+
+    const state = {
+      version: 1,
+      semesterLabel: "Semester 5",
+      targetSgpa: 8.9,
+      subjects: [
+        {
+          id: "sub-test",
+          name: "Operating Systems",
+          credits: 4,
+          courseType: "standard" as const,
+          icaMarks: 42,
+          icaMax: 50,
+          seeMarks: 84,
+          seeMax: 100,
+        },
+      ],
+      appliedHistory: [],
+    };
+
+    saveStoredData(state);
+    const loaded = loadStoredData();
+    expect(loaded.semesterLabel).toBe("Semester 5");
+    expect(loaded.subjects.length).toBe(1);
+    expect(loaded.subjects[0].name).toBe("Operating Systems");
+
+    clearStoredData();
+    const afterClear = loadStoredData();
+    expect(afterClear.subjects.length).toBe(0);
+
+    (globalThis as unknown as { window: unknown }).window = originalWindow;
   });
 });

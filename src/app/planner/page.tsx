@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Target, RotateCcw, AlertCircle, Sparkles, BookOpen } from "lucide-react";
+import { Target, RotateCcw, BookOpen } from "lucide-react";
 import { useAcademic } from "@/context/academic-context";
 import { TargetForm } from "@/components/planner/target-form";
 import { TargetResultsTable } from "@/components/planner/target-results-table";
@@ -10,7 +10,6 @@ import { ApplyPlanModal } from "@/components/planner/apply-plan-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { optimizeTargetSgpa } from "@/lib/target-optimizer";
-import { OptimizerResult } from "@/types/academic";
 
 export default function PlannerPage() {
   const {
@@ -25,17 +24,14 @@ export default function PlannerPage() {
   } = useAcademic();
 
   const [strategy, setStrategy] = useState<"balanced" | "minimum-effort">("balanced");
-  const [optimizerResult, setOptimizerResult] = useState<OptimizerResult | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
-  // Recalculate whenever targetSgpa, strategy, or subjects change
-  useEffect(() => {
+  // Derive optimizer plan whenever targetSgpa, strategy, or subjects change
+  const optimizerResult = useMemo(() => {
     if (subjects.length > 0) {
-      const res = optimizeTargetSgpa(subjects, targetSgpa, strategy);
-      setOptimizerResult(res);
-    } else {
-      setOptimizerResult(null);
+      return optimizeTargetSgpa(subjects, targetSgpa, strategy);
     }
+    return null;
   }, [subjects, targetSgpa, strategy]);
 
   if (!isHydrated) {
@@ -50,10 +46,7 @@ export default function PlannerPage() {
   }
 
   const handleCompute = () => {
-    if (subjects.length > 0) {
-      const res = optimizeTargetSgpa(subjects, targetSgpa, strategy);
-      setOptimizerResult(res);
-    }
+    // Already dynamically derived with useMemo
   };
 
   const handleConfirmApply = () => {

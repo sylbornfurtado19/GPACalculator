@@ -9,7 +9,7 @@ import { Footer } from "./footer";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isHome = !pathname || pathname === "/" || pathname === "";
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>

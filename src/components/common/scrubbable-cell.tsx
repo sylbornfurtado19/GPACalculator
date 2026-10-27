@@ -29,17 +29,18 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(value));
-  const [isDragging, setIsDragging] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
   const startXRef = useRef<number>(0);
   const startValRef = useRef<number>(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (!isEditing) {
       setEditValue(String(value));
     }
-  }, [value, isEditing]);
+  }
 
   const commitValue = useCallback(
     (parsed: number) => {
@@ -57,7 +58,6 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
 
     startXRef.current = e.clientX;
     startValRef.current = value;
-    setIsDragging(false);
 
     let hasDragged = false;
 
@@ -65,7 +65,6 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
       const deltaX = moveEvent.clientX - startXRef.current;
       if (Math.abs(deltaX) > 3) {
         hasDragged = true;
-        setIsDragging(true);
         document.body.classList.add('scrub-active');
       }
 
@@ -82,10 +81,6 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       document.body.classList.remove('scrub-active');
-
-      setTimeout(() => {
-        setIsDragging(false);
-      }, 50);
 
       // If user merely clicked without dragging, switch to direct input edit mode
       if (!hasDragged) {
@@ -108,7 +103,6 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
       const deltaX = moveEvent.touches[0].clientX - startXRef.current;
       if (Math.abs(deltaX) > 6) {
         hasDragged = true;
-        setIsDragging(true);
       }
       if (hasDragged) {
         const change = Math.round(deltaX * 0.4) * step;
@@ -120,7 +114,6 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
     const onTouchEnd = () => {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
-      setIsDragging(false);
       if (!hasDragged) {
         setIsEditing(true);
       }

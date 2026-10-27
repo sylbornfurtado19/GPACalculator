@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { GraduationCap, ShieldCheck, Heart } from "lucide-react";
+import { GraduationCap, ShieldCheck } from "lucide-react";
 
 export function Footer() {
   return (

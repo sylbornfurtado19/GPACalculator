@@ -23,7 +23,6 @@ interface StatsOverviewProps {
 export function StatsOverview({ summary, targetSgpa }: StatsOverviewProps) {
   const diff = summary.sgpa - targetSgpa;
   const isAhead = diff >= 0;
-  const targetMet = summary.totalSubjects > 0 && isAhead && summary.allPassed;
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

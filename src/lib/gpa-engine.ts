@@ -99,8 +99,8 @@ export function evaluateCourse(course: Course): CourseEvaluation {
   }
 
   const isIcaOnly = course.type === 'ica_only';
-  const ica = Math.max(0, Math.min(50, Math.round(course.icaMarks || 0)));
-  const see = Math.max(0, Math.min(100, Math.round(course.seeMarks || 0)));
+  const ica = Math.max(0, Math.min(50, Number(course.icaMarks) || 0));
+  const see = Math.max(0, Math.min(100, Number(course.seeMarks) || 0));
 
   const isIcaPassed = ica >= 20;
   const isSeePassed = isIcaOnly ? true : see >= 40;
@@ -281,6 +281,20 @@ export function optimizeForTargetSgpa(
     }
   }
 
+  const hasFailedLockedCourse = courses.some(
+    (c) => c.isLocked && !baseEvaluations[c.id]?.isPassed
+  );
+  if (hasFailedLockedCourse) {
+    return {
+      feasible: false,
+      targetSgpa,
+      projectedSgpa: totalCredits > 0 ? lockedGp / totalCredits : 0,
+      totalAdditionalMarksNeeded: 0,
+      recommendations: {},
+      message: 'One or more locked courses are failing passing minimums (<20 ICA or <40 SEE). Unlock them to plan passing marks.',
+    };
+  }
+
   const neededUnlockedGp = Math.max(0, targetWeightedGp - lockedGp);
 
   // For each unlocked course, generate options: achievable (gradePoint, costInMarks, recommendedMarks)
@@ -337,22 +351,33 @@ export function optimizeForTargetSgpa(
           });
         }
       } else {
-        // Standard course: keep ICA fixed unless ICA < 20 (must bring to 20)
-        const targetIca = Math.max(20, currentIca);
-        const reqSee = minSeeForGrade(targetIca, gp);
-        if (reqSee !== null) {
-          const seeCost = Math.max(0, reqSee - currentSee);
-          const icaCost = Math.max(0, targetIca - currentIca);
-          const totalCost = seeCost + icaCost * 2; // slight weight to SEE vs ICA
-          options.push({
-            gradePoint: gp,
-            weightedGp: gp * course.credits,
-            cost: totalCost,
-            recommendedIca: targetIca,
-            recommendedSee: reqSee,
-            finalPercentage: Math.round((targetIca + reqSee / 2) * 100) / 100,
-            gradeLetter: scale.grade,
-          });
+        // Standard course: evaluate feasible ICA values from Math.max(20, currentIca) to 50
+        // to find the minimal cost combination (enables grade 10 even if current ICA is below 40)
+        let bestOption: GradeOption | null = null;
+        const minIca = Math.max(20, currentIca);
+
+        for (let candidateIca = minIca; candidateIca <= 50; candidateIca++) {
+          const reqSee = minSeeForGrade(candidateIca, gp);
+          if (reqSee !== null) {
+            const seeCost = Math.max(0, reqSee - currentSee);
+            const icaCost = Math.max(0, candidateIca - currentIca);
+            const totalCost = seeCost + icaCost * 2;
+            if (!bestOption || totalCost < bestOption.cost) {
+              bestOption = {
+                gradePoint: gp,
+                weightedGp: gp * course.credits,
+                cost: totalCost,
+                recommendedIca: candidateIca,
+                recommendedSee: reqSee,
+                finalPercentage: Math.round((candidateIca + reqSee / 2) * 100) / 100,
+                gradeLetter: scale.grade,
+              };
+            }
+          }
+        }
+
+        if (bestOption) {
+          options.push(bestOption);
         }
       }
     }

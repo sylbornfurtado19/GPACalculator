@@ -4,7 +4,6 @@ import {
   BookOpen,
   Award,
   CheckCircle2,
-  AlertTriangle,
   Layers,
   Sparkles,
   ArrowRight,

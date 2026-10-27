@@ -6,10 +6,9 @@ import {
   AlertTriangle,
   ArrowRight,
   Lock,
-  LockOpen,
   Sparkles,
 } from "lucide-react";
-import { OptimizerResult, TargetRecommendation } from "@/types/academic";
+import { OptimizerResult } from "@/types/academic";
 import { GradeBadge, StatusBadge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ export function TargetResultsTable({
   currentSgpa,
   onApplyPlan,
 }: TargetResultsTableProps) {
-  const sgpaDiff = result.achievedSgpa - currentSgpa;
 
   return (
     <Card className="border-[var(--border-color)] bg-[var(--bg-card)] shadow-xs">

@@ -202,6 +202,12 @@ export default function AcademicHudPage() {
     });
   }, []);
 
+  // Toast notification helper
+  const showToast = useCallback((msg: string) => {
+    setCopyToast(msg);
+    setTimeout(() => setCopyToast(null), 3000);
+  }, []);
+
   // Apply target plan to active course roster
   const handleApplyPlan = useCallback(() => {
     if (!targetPlan || !targetPlan.feasible) return;
@@ -222,29 +228,7 @@ export default function AcademicHudPage() {
 
     setIsGhostModeActive(false);
     showToast('Applied Target Plan to Subjects!');
-  }, [targetPlan]);
-
-  // Keyboard shortcut Cmd+K / Ctrl+K to apply target plan
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        if (isGhostModeActive && targetPlan?.feasible) {
-          handleApplyPlan();
-        } else {
-          setIsGhostModeActive((prev) => !prev);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isGhostModeActive, targetPlan, handleApplyPlan]);
-
-  // Toast notification helper
-  const showToast = (msg: string) => {
-    setCopyToast(msg);
-    setTimeout(() => setCopyToast(null), 3000);
-  };
+  }, [targetPlan, showToast]);
 
   // Export official NMIMS PDF grade card report
   const handleExportPdf = () => {

@@ -8,7 +8,6 @@ import {
   Trash2,
   Edit2,
   AlertCircle,
-  HelpCircle,
 } from "lucide-react";
 import { EvaluatedSubject } from "@/types/academic";
 import { GradeBadge, StatusBadge } from "@/components/ui/badge";

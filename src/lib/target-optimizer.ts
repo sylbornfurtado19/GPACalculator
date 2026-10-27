@@ -1,13 +1,11 @@
 import {
-  CourseType,
-  EvaluatedSubject,
   LetterGrade,
   OptimizerResult,
   Subject,
   SubjectPriority,
   TargetRecommendation,
 } from "@/types/academic";
-import { evaluateSubject, getGradeForPercentage, NMIMS_RULES } from "./grading";
+import { evaluateSubject, NMIMS_RULES } from "./grading";
 
 interface GradeFeasibility {
   gradePoints: number;
@@ -588,17 +586,26 @@ export function optimizeTargetSgpa(
   }
 
   const achievedSgpa = Number((chosenW / totalCredits).toFixed(2));
+  const allRecommendationsPass = recommendations.every(
+    (r) => r.isAchievable && r.status === "pass"
+  );
+  const reachedTarget = chosenW >= Math.ceil(targetRequiredWeightedPoints - 1e-6);
+  const reallyAchievable = isAchievable && reachedTarget && allRecommendationsPass && targetSgpa <= 10.0;
 
   let message = "";
-  if (!isAchievable) {
-    message = `Target SGPA of ${targetSgpa.toFixed(2)} is mathematically unattainable with current constraints and locked marks. Maximum achievable SGPA is ${maxPossibleSgpa.toFixed(2)}.`;
+  if (!reallyAchievable) {
+    if (!allRecommendationsPass) {
+      message = `Target SGPA of ${targetSgpa.toFixed(2)} is unattainable because one or more subjects fail passing minimums under current locks. Maximum achievable SGPA is ${maxPossibleSgpa.toFixed(2)}.`;
+    } else {
+      message = `Target SGPA of ${targetSgpa.toFixed(2)} is mathematically unattainable with current constraints and locked marks. Maximum achievable SGPA is ${maxPossibleSgpa.toFixed(2)}.`;
+    }
   } else {
     message = `Plan found! Recommended marks will achieve an SGPA of ${achievedSgpa.toFixed(2)}.`;
   }
 
   return {
     targetSgpa,
-    achievable: isAchievable,
+    achievable: reallyAchievable,
     achievedSgpa,
     maxPossibleSgpa,
     minPossibleSgpa,

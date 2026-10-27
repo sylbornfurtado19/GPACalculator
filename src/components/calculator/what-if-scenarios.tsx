@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, ArrowRight, RotateCcw, TrendingUp } from "lucide-react";
+import { Sparkles, ArrowRight, RotateCcw } from "lucide-react";
 import { EvaluatedSubject, Subject } from "@/types/academic";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { calculateSgpa, analyzeNextGradeOpportunity } from "@/lib/gpa";
-import { formatGpa, formatPercent } from "@/lib/utils";
+import { formatGpa } from "@/lib/utils";
 
 interface WhatIfScenariosProps {
   subjects: EvaluatedSubject[];

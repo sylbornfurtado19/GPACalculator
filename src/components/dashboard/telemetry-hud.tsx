@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Sliders,
-  Sparkles,
   Minus,
   Plus,
 } from 'lucide-react';
@@ -19,7 +18,7 @@ interface TelemetryHudProps {
   simulatedSgpa?: number | null;
   activeScenarioName?: string | null;
   isGhostModeActive: boolean;
-  onToggleGhostMode: () => void;
+  onToggleGhostMode?: () => void;
   canApplyPlan?: boolean;
   onApplyPlan?: () => void;
   unlockedCount: number;
@@ -32,7 +31,6 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
   simulatedSgpa,
   activeScenarioName,
   isGhostModeActive,
-  onToggleGhostMode,
   canApplyPlan = false,
   onApplyPlan,
   unlockedCount,

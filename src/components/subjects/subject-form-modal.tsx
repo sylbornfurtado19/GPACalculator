@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CourseType, Subject, SubjectPriority } from "@/types/academic";
-import { NMIMS_RULES } from "@/lib/grading";
 
 interface SubjectFormModalProps {
   isOpen: boolean;
@@ -20,53 +19,49 @@ export function SubjectFormModal({
   onSubmit,
   initialData,
 }: SubjectFormModalProps) {
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [credits, setCredits] = useState(4);
-  const [courseType, setCourseType] = useState<CourseType>("standard");
-  const [icaMarks, setIcaMarks] = useState(38);
-  const [icaMax, setIcaMax] = useState(50);
-  const [seeMarks, setSeeMarks] = useState(75);
-  const [seeMax, setSeeMax] = useState(100);
-  const [isIcaAbsent, setIsIcaAbsent] = useState(false);
-  const [isSeeAbsent, setIsSeeAbsent] = useState(false);
-  const [isIcaLocked, setIsIcaLocked] = useState(false);
-  const [isSeeLocked, setIsSeeLocked] = useState(false);
-  const [priority, setPriority] = useState<SubjectPriority>("medium");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initialData ? "Edit Subject" : "Add New Subject"}
+      description="Configure subject credits, course structure, and component marks."
+      maxWidth="lg"
+    >
+      {isOpen && (
+        <SubjectFormInner
+          key={initialData ? initialData.id : "new"}
+          initialData={initialData}
+          onSubmit={onSubmit}
+          onClose={onClose}
+        />
+      )}
+    </Modal>
+  );
+}
 
-  useEffect(() => {
-    if (initialData) {
-      setName(initialData.name);
-      setCode(initialData.code || "");
-      setCredits(initialData.credits);
-      setCourseType(initialData.courseType);
-      setIcaMarks(initialData.icaMarks);
-      setIcaMax(initialData.icaMax || 50);
-      setSeeMarks(initialData.seeMarks || 0);
-      setSeeMax(initialData.seeMax || 100);
-      setIsIcaAbsent(Boolean(initialData.isIcaAbsent));
-      setIsSeeAbsent(Boolean(initialData.isSeeAbsent));
-      setIsIcaLocked(Boolean(initialData.isIcaLocked));
-      setIsSeeLocked(Boolean(initialData.isSeeLocked));
-      setPriority(initialData.priority || "medium");
-    } else {
-      setName("");
-      setCode("");
-      setCredits(4);
-      setCourseType("standard");
-      setIcaMarks(35);
-      setIcaMax(50);
-      setSeeMarks(70);
-      setSeeMax(100);
-      setIsIcaAbsent(false);
-      setIsSeeAbsent(false);
-      setIsIcaLocked(false);
-      setIsSeeLocked(false);
-      setPriority("medium");
-    }
-    setErrors({});
-  }, [initialData, isOpen]);
+function SubjectFormInner({
+  initialData,
+  onSubmit,
+  onClose,
+}: {
+  initialData?: Subject | null;
+  onSubmit: (subject: Omit<Subject, "id">) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(initialData?.name || "");
+  const [code, setCode] = useState(initialData?.code || "");
+  const [credits, setCredits] = useState(initialData?.credits ?? 4);
+  const [courseType, setCourseType] = useState<CourseType>(initialData?.courseType || "standard");
+  const [icaMarks, setIcaMarks] = useState(initialData?.icaMarks ?? 35);
+  const [icaMax, setIcaMax] = useState(initialData?.icaMax ?? 50);
+  const [seeMarks, setSeeMarks] = useState(initialData?.seeMarks ?? 70);
+  const [seeMax, setSeeMax] = useState(initialData?.seeMax ?? 100);
+  const [isIcaAbsent, setIsIcaAbsent] = useState(Boolean(initialData?.isIcaAbsent));
+  const [isSeeAbsent, setIsSeeAbsent] = useState(Boolean(initialData?.isSeeAbsent));
+  const [isIcaLocked, setIsIcaLocked] = useState(Boolean(initialData?.isIcaLocked));
+  const [isSeeLocked, setIsSeeLocked] = useState(Boolean(initialData?.isSeeLocked));
+  const [priority, setPriority] = useState<SubjectPriority>(initialData?.priority || "medium");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,14 +110,7 @@ export function SubjectFormModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={initialData ? "Edit Subject" : "Add New Subject"}
-      description="Configure subject credits, course structure, and component marks."
-      maxWidth="lg"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="sm:col-span-2">
             <Input
@@ -301,6 +289,5 @@ export function SubjectFormModal({
           </Button>
         </div>
       </form>
-    </Modal>
-  );
+    );
 }

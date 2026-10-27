@@ -11,12 +11,9 @@ import {
   Unlock,
   Trash2,
   Plus,
-  AlertCircle,
   Copy,
   Info,
-  CheckCircle2,
   BookOpen,
-  ArrowRight,
   Minus,
 } from 'lucide-react';
 

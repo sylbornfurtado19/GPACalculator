@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useSyncExternalStore } from "react";
 import {
   AcademicStoreState,
   EvaluatedSubject,
@@ -39,16 +39,20 @@ interface AcademicContextValue {
 
 const AcademicContext = createContext<AcademicContextValue | null>(null);
 
-export function AcademicProvider({ children }: { children: React.ReactNode }) {
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [state, setState] = useState<AcademicStoreState>(DEFAULT_INITIAL_STATE);
+const emptySubscribe = () => () => {};
 
-  // Load from localStorage only on client mount to prevent SSR hydration mismatch
-  useEffect(() => {
-    const loaded = loadStoredData();
-    setState(loaded);
-    setIsHydrated(true);
-  }, []);
+export function AcademicProvider({ children }: { children: React.ReactNode }) {
+  const isHydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const [state, setState] = useState<AcademicStoreState>(() => {
+    if (typeof window !== "undefined") {
+      return loadStoredData();
+    }
+    return DEFAULT_INITIAL_STATE;
+  });
 
   // Sync to localStorage whenever state updates, only if hydrated
   useEffect(() => {

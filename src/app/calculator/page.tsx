@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   List,
   Target,
-  Sparkles,
 } from "lucide-react";
 import { useAcademic } from "@/context/academic-context";
 import { SubjectTable } from "@/components/subjects/subject-table";
