@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface ScrubbableCellProps {
@@ -160,7 +160,7 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
           onBlur={() => {
             commitValue(parseFloat(editValue) || 0);
           }}
-          className="w-full text-center font-mono text-xs font-semibold tabular-nums text-white bg-cyan-950/60 border border-cyan-500/50 rounded px-1.5 py-1 outline-none ring-1 ring-cyan-500/40"
+          className="w-full text-center text-xs font-semibold tabular-nums text-slate-900 dark:text-white bg-slate-100 dark:bg-cyan-950/60 border border-indigo-400 dark:border-cyan-500/50 rounded-lg px-2 py-1 outline-none ring-2 ring-indigo-500/20 dark:ring-cyan-500/40"
         />
       </div>
     );
@@ -172,10 +172,10 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       title={disabled ? 'Locked' : 'Click to type, drag horizontally to scrub'}
-      className={`relative select-none overflow-hidden group cursor-ew-resize inline-flex items-center justify-between rounded px-2 py-1 text-xs font-mono font-medium transition-all ${
+      className={`relative select-none overflow-hidden group cursor-ew-resize inline-flex items-center justify-between rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
         disabled
-          ? 'opacity-40 cursor-not-allowed bg-white/[0.02] border border-white/[0.04]'
-          : 'bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.18]'
+          ? 'opacity-40 cursor-not-allowed bg-slate-100 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04]'
+          : 'bg-slate-100/70 dark:bg-white/[0.04] hover:bg-slate-200/70 dark:hover:bg-white/[0.08] border border-slate-200/80 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.18]'
       } ${className}`}
     >
       {/* Background fill gauge bar */}
@@ -183,22 +183,22 @@ export const ScrubbableCell: React.FC<ScrubbableCellProps> = ({
         <div
           className={`absolute left-0 top-0 bottom-0 pointer-events-none transition-all duration-75 ${
             highlightDelta > 0
-              ? 'bg-cyan-500/20'
-              : 'bg-white/[0.04] group-hover:bg-white/[0.07]'
+              ? 'bg-indigo-500/15 dark:bg-cyan-500/20'
+              : 'bg-slate-200/50 dark:bg-white/[0.04] group-hover:bg-slate-300/40 dark:group-hover:bg-white/[0.07]'
           }`}
           style={{ width: `${percentage}%` }}
         />
       )}
 
       {/* Main numeric value */}
-      <span className="relative z-10 tabular-nums tracking-tight font-semibold">
+      <span className="relative z-10 tabular-nums tracking-tight font-semibold text-slate-800 dark:text-neutral-100">
         {value}
-        {suffix && <span className="text-[10px] text-neutral-500 ml-0.5">{suffix}</span>}
+        {suffix && <span className="text-[10px] text-slate-500 dark:text-neutral-500 ml-0.5">{suffix}</span>}
       </span>
 
       {/* Recommended diff indicator */}
       {highlightDelta > 0 && (
-        <span className="relative z-10 ml-1.5 text-[10px] font-mono text-cyan-400 font-bold bg-cyan-950/80 px-1 rounded">
+        <span className="relative z-10 ml-1.5 text-[10px] text-indigo-600 dark:text-cyan-400 font-bold bg-indigo-50 dark:bg-cyan-950/80 px-1 rounded">
           +{highlightDelta}
         </span>
       )}

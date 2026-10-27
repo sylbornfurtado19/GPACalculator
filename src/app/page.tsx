@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Course,
@@ -25,31 +25,44 @@ import {
   Sparkles,
   Layers,
   FileText,
+  X,
+  Trash2,
 } from 'lucide-react';
 
 export default function AcademicHudPage() {
-  // Theme state: dark by default
+  // Theme state: defaults to elegant off-white 'light'
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nmims_hud_theme');
-      return (saved as 'dark' | 'light') || 'dark';
+      return (saved as 'dark' | 'light') || 'light';
     }
-    return 'dark';
+    return 'light';
   });
 
-  // Active courses state
+  // Active courses state - defaults to clean EMPTY state []
   const [courses, setCourses] = useState<Course[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nmims_hud_courses');
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Check if this was the unwanted old preset data (e.g. CS301 Algorithm Design)
+            const isOldPreset =
+              parsed.length === 6 &&
+              parsed.some(
+                (c) => c.code === 'CS301' && c.name?.includes('Algorithm Design')
+              );
+            if (!isOldPreset) {
+              return parsed;
+            }
+          }
         } catch (e) {
           console.error('Failed to parse saved courses', e);
         }
       }
     }
-    return DEFAULT_NMIMS_COURSES;
+    return [];
   });
 
   // Target SGPA state (defaults to 8.5)
@@ -159,10 +172,11 @@ export default function AcademicHudPage() {
   }, []);
 
   const handleAddCourse = useCallback(() => {
+    const count = courses.length + 1;
     const newCourse: Course = {
       id: `c-${Date.now()}`,
-      code: `CS${300 + Math.floor(Math.random() * 99)}`,
-      name: 'New Course Title',
+      code: `SUB${count}`,
+      name: `Subject ${count}`,
       type: 'standard',
       credits: 3,
       icaMarks: 35,
@@ -170,7 +184,7 @@ export default function AcademicHudPage() {
       isLocked: false,
     };
     setCourses((prev) => [...prev, newCourse]);
-  }, []);
+  }, [courses.length]);
 
   const handleDuplicateCourse = useCallback((id: string) => {
     setCourses((prev) => {
@@ -204,7 +218,7 @@ export default function AcademicHudPage() {
     );
 
     setIsGhostModeActive(false);
-    showToast('Applied Target Plan to Active Curriculum!');
+    showToast('Applied Target Plan to Subjects!');
   }, [targetPlan]);
 
   // Keyboard shortcut Cmd+K to apply target plan
@@ -231,6 +245,10 @@ export default function AcademicHudPage() {
 
   // Export transcript as clean markdown
   const handleCopyTranscript = () => {
+    if (courses.length === 0) {
+      showToast('No subjects to export yet');
+      return;
+    }
     let md = `# NMIMS Academic Transcript Summary\n`;
     md += `Current SGPA: ${currentTelemetry.sgpa.toFixed(2)} / 10.00\n`;
     md += `Total Credits: ${currentTelemetry.totalCredits} | Earned Grade Points: ${currentTelemetry.earnedGradePoints}\n\n`;
@@ -239,16 +257,20 @@ export default function AcademicHudPage() {
 
     courses.forEach((c) => {
       const ev = currentTelemetry.courseEvaluations[c.id];
-      md += `| ${c.code} | ${c.name} | ${c.type} | ${c.credits} | ${c.icaMarks} | ${c.type === 'standard' ? c.seeMarks : 'N/A'} | ${ev.finalPercentage}% | ${ev.grade} | ${ev.gradePoints} |\n`;
+      md += `| ${c.code} | ${c.name} | ${c.type} | ${c.credits} | ${c.icaMarks} | ${c.type === 'standard' ? c.seeMarks : 'N/A'} | ${ev?.finalPercentage ?? 0}% | ${ev?.grade ?? 'F'} | ${ev?.gradePoints ?? 0} |\n`;
     });
 
     navigator.clipboard.writeText(md).then(() => {
-      showToast('Transcript copied to clipboard in Markdown format');
+      showToast('Transcript copied in Markdown format');
     });
   };
 
   // Export JSON configuration
   const handleExportJson = () => {
+    if (courses.length === 0) {
+      showToast('No subjects to export');
+      return;
+    }
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(courses, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
@@ -278,95 +300,112 @@ export default function AcademicHudPage() {
     reader.readAsText(file);
   };
 
-  // Reset to default preset
+  // Reset to clean empty state (no preset dummy data)
   const handleReset = () => {
-    setCourses(DEFAULT_NMIMS_COURSES);
+    setCourses([]);
     setActiveScenario('none');
     setIsGhostModeActive(false);
-    showToast('Reset to NMIMS Standard Engineering Semester');
+    localStorage.removeItem('nmims_hud_courses');
+    showToast('Cleared all subjects. Clean slate ready!');
   };
 
   const unlockedCount = courses.filter((c) => !c.isLocked).length;
 
   return (
-    <div className="min-h-screen bg-[#090A0F] text-[#EDEDED] font-sans antialiased selection:bg-cyan-500/20 selection:text-cyan-200">
-      {/* Top Bar Contract: Zone 1 (Wordmark) - Zone 2 (Clean links) - Zone 3 (Primary Action) */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#090A0F]/85 border-b border-white/[0.08] px-4 md:px-8 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-8">
-          {/* Zone 1: Brand Wordmark */}
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#090A0F] text-slate-900 dark:text-[#EDEDED] font-sans antialiased transition-colors duration-150">
+      {/* Top Header Bar */}
+      <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#F8F9FA]/85 dark:bg-[#090A0F]/85 border-b border-slate-200/80 dark:border-white/[0.08] px-4 md:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          {/* Brand Wordmark */}
           <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
               <GraduationCap className="w-4 h-4" />
             </div>
-            <span className="text-base font-bold tracking-tight text-white font-mono">
-              NMIMS Academic HUD
-            </span>
+            <div>
+              <span className="text-sm sm:text-base font-bold tracking-tight text-slate-900 dark:text-white block">
+                NMIMS GPA Engine
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-neutral-400 hidden sm:block">
+                Exact NMIMS Evaluation & Target Optimizer
+              </span>
+            </div>
           </div>
 
-          {/* Zone 2: Concise Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-mono text-neutral-400">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-5 text-xs text-slate-600 dark:text-neutral-400 font-medium">
             <button
               onClick={() => setShowScaleModal(true)}
-              className="hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Grading Scale</span>
             </button>
             <button
               onClick={() => setShowPresetModal(true)}
-              className="hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Curriculum Presets</span>
+              <span>Sample Curriculums</span>
             </button>
             <button
               onClick={handleCopyTranscript}
-              className="hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5"
+              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Copy Markdown</span>
             </button>
           </nav>
 
-          {/* Zone 3: 1 Primary Action Group */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Actions Group */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              onClick={() => setShowScaleModal(true)}
+              className="md:hidden p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-neutral-300 transition-all cursor-pointer"
+              title="View grading scale"
+            >
+              <BookOpen className="w-4 h-4" />
+            </button>
+
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white transition-all"
-              title="Toggle theme"
+              className="p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-neutral-300 transition-all cursor-pointer"
+              title={theme === 'dark' ? 'Switch to off-white light theme' : 'Switch to dark theme'}
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            <button
-              onClick={handleReset}
-              className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-neutral-300 hover:text-white transition-all"
-              title="Reset to default courses"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+            {courses.length > 0 && (
+              <button
+                onClick={handleReset}
+                className="p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-rose-50 dark:hover:bg-rose-950/20 border border-slate-200 dark:border-white/[0.08] text-slate-700 hover:text-rose-600 dark:text-neutral-300 dark:hover:text-rose-400 transition-all cursor-pointer"
+                title="Clear all subjects"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
 
             <button
               onClick={() => setIsGhostModeActive(!isGhostModeActive)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 isGhostModeActive
-                  ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                  : 'bg-white/[0.06] hover:bg-white/[0.1] text-neutral-200 border border-white/[0.1]'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-cyan-500 dark:text-black'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] dark:text-neutral-200 dark:border-white/[0.1]'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{isGhostModeActive ? 'Target Diff Active' : 'Target Planner'}</span>
+              <span className="hidden sm:inline">{isGhostModeActive ? 'Target Diff Active' : 'Target Planner'}</span>
+              <span className="sm:hidden">{isGhostModeActive ? 'Target' : 'Plan'}</span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Command Viewport */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-6 flex flex-col gap-6">
+      {/* Main Viewport */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6">
         {/* Toast Alert Notification */}
         {copyToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#161922] border border-cyan-500/40 text-cyan-300 font-mono text-xs shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2">
-            <Check className="w-4 h-4 text-cyan-400" />
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-[#161922] dark:border dark:border-cyan-500/40 text-xs font-medium shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2">
+            <Check className="w-4 h-4 text-emerald-400 dark:text-cyan-400" />
             <span>{copyToast}</span>
           </div>
         )}
@@ -385,20 +424,22 @@ export default function AcademicHudPage() {
           unlockedCount={unlockedCount}
         />
 
-        {/* 2. Ghost Optimizer & What-If Dial Dials */}
-        <GhostOptimizer
-          isGhostModeActive={isGhostModeActive}
-          onToggleGhostMode={() => setIsGhostModeActive(!isGhostModeActive)}
-          targetPlan={targetPlan}
-          targetSgpa={targetSgpa}
-          currentSgpa={currentTelemetry.sgpa}
-          onApplyPlan={handleApplyPlan}
-          courses={courses}
-          activeScenario={activeScenario}
-          onSelectScenario={setActiveScenario}
-        />
+        {/* 2. Ghost Optimizer & What-If Dial (Shown when subjects exist) */}
+        {courses.length > 0 && (
+          <GhostOptimizer
+            isGhostModeActive={isGhostModeActive}
+            onToggleGhostMode={() => setIsGhostModeActive(!isGhostModeActive)}
+            targetPlan={targetPlan}
+            targetSgpa={targetSgpa}
+            currentSgpa={currentTelemetry.sgpa}
+            onApplyPlan={handleApplyPlan}
+            courses={courses}
+            activeScenario={activeScenario}
+            onSelectScenario={setActiveScenario}
+          />
+        )}
 
-        {/* 3. The Command Grid */}
+        {/* 3. The Subject Grid / Mobile Cards */}
         <CommandGrid
           courses={simulatedCourses || courses}
           evaluations={
@@ -414,24 +455,24 @@ export default function AcademicHudPage() {
           targetPlan={targetPlan}
         />
 
-        {/* Subtle Footer Bar with Real File Actions */}
-        <footer className="mt-4 pt-4 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-neutral-400">
+        {/* Subtle Footer Bar */}
+        <footer className="mt-2 pt-4 border-t border-slate-200/80 dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-neutral-400">
           <div className="flex items-center gap-2">
-            <span>NMIMS Evaluation Engine (Autonomous & De-novo Standards)</span>
-            <span className="text-neutral-600">Â·</span>
-            <span>Deterministic DP Optimizer</span>
+            <span>NMIMS Autonomous Academic Standards</span>
+            <span className="text-slate-300 dark:text-neutral-600">·</span>
+            <span>Dynamic Programming GPA Engine</span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={handleExportJson}
-              className="flex items-center gap-1 hover:text-white transition-colors"
+              className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export JSON</span>
             </button>
-            <span className="text-neutral-700">|</span>
-            <label className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer">
+            <span className="text-slate-300 dark:text-neutral-700">|</span>
+            <label className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer">
               <Upload className="w-3.5 h-3.5" />
               <span>Import JSON</span>
               <input
@@ -445,67 +486,80 @@ export default function AcademicHudPage() {
         </footer>
       </main>
 
-      {/* Grading Scale Modal / Slide-over */}
+      {/* Official NMIMS Grading Matrix Modal */}
       {showScaleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-[#11131A] border border-white/[0.12] shadow-2xl p-6 relative">
-            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-mono font-bold uppercase text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#11131A] border border-slate-200 dark:border-white/[0.12] shadow-2xl p-5 sm:p-6 relative">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-white/[0.08] mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 flex items-center justify-center text-indigo-600 dark:text-cyan-400">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                   Official NMIMS Grading Matrix
                 </h3>
               </div>
               <button
                 onClick={() => setShowScaleModal(false)}
-                className="text-neutral-400 hover:text-white text-xs font-mono"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
-                Close âœ•
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="divide-y divide-white/[0.06] text-xs font-mono">
-              <div className="grid grid-cols-4 py-2 font-bold text-neutral-400 uppercase text-[11px]">
+            <div className="divide-y divide-slate-100 dark:divide-white/[0.06] text-xs">
+              <div className="grid grid-cols-4 py-2 font-bold text-slate-500 dark:text-neutral-400 uppercase text-[11px]">
                 <span>Marks Range</span>
                 <span>Grade</span>
                 <span>Points</span>
                 <span>Standing</span>
               </div>
               {GRADE_SCALE.map((scale) => (
-                <div key={scale.grade} className="grid grid-cols-4 py-2 text-neutral-300">
-                  <span>â‰¥ {scale.minMarks}%</span>
-                  <span className="font-bold text-cyan-400">{scale.grade}</span>
-                  <span>{scale.points}.0</span>
-                  <span className="text-neutral-400">{scale.label}</span>
+                <div key={scale.grade} className="grid grid-cols-4 py-2 text-slate-700 dark:text-neutral-300 items-center">
+                  <span className="font-medium tabular-nums">≥ {scale.minMarks}%</span>
+                  <span className="font-bold text-indigo-600 dark:text-cyan-400">{scale.grade}</span>
+                  <span className="tabular-nums">{scale.points}.0</span>
+                  <span className="text-slate-500 dark:text-neutral-400">{scale.label}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-white/[0.08] text-[11px] text-neutral-400 font-mono space-y-1">
-              <div>â€¢ <strong>Standard Course:</strong> Final % = ICA (out of 50) + SEE/2 (out of 100).</div>
-              <div>â€¢ <strong>Passing Condition:</strong> ICA â‰¥ 20 AND SEE â‰¥ 40.</div>
-              <div>â€¢ <strong>ICA-Only Course:</strong> Final % = ICA * 2. Passing condition: ICA â‰¥ 20.</div>
+            <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-white/[0.08] text-xs text-slate-600 dark:text-neutral-400 space-y-1.5">
+              <div className="flex items-start gap-1.5">
+                <span className="text-indigo-600 dark:text-cyan-400 font-bold">•</span>
+                <span><strong>Standard Course:</strong> Final % = ICA (out of 50) + SEE / 2 (out of 100).</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="text-indigo-600 dark:text-cyan-400 font-bold">•</span>
+                <span><strong>Passing Criteria:</strong> ICA ≥ 20 AND SEE ≥ 40.</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="text-indigo-600 dark:text-cyan-400 font-bold">•</span>
+                <span><strong>ICA-Only Course:</strong> Final % = ICA × 2. Passing condition: ICA ≥ 20.</span>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Preset Curriculums Modal */}
+      {/* Preset Curriculums Modal (Optional, user initiates) */}
       {showPresetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-[#11131A] border border-white/[0.12] shadow-2xl p-6 relative">
-            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-sm font-mono font-bold uppercase text-white">
-                  Curriculum Presets
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#11131A] border border-slate-200 dark:border-white/[0.12] shadow-2xl p-5 sm:p-6 relative">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-white/[0.08] mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 flex items-center justify-center text-indigo-600 dark:text-cyan-400">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Sample Curriculum Presets
                 </h3>
               </div>
               <button
                 onClick={() => setShowPresetModal(false)}
-                className="text-neutral-400 hover:text-white text-xs font-mono"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-neutral-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
-                Close âœ•
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -514,15 +568,15 @@ export default function AcademicHudPage() {
                 onClick={() => {
                   setCourses(DEFAULT_NMIMS_COURSES);
                   setShowPresetModal(false);
-                  showToast('Loaded NMIMS Computer Engineering Sem 4');
+                  showToast('Loaded NMIMS Computer Engineering Sample');
                 }}
-                className="w-full p-3 text-left rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all"
+                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
               >
-                <div className="text-xs font-bold text-white font-mono">
+                <div className="text-xs font-bold text-slate-900 dark:text-white">
                   NMIMS B.Tech CS/IT (Sem 4)
                 </div>
-                <div className="text-[11px] text-neutral-400 mt-0.5">
-                  6 Courses Â· 18 Credits Â· Algorithms, OS, Architecture, Linear Algebra
+                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                  6 Courses · 18 Credits · Algorithms, OS, Architecture, Linear Algebra
                 </div>
               </button>
 
@@ -536,15 +590,15 @@ export default function AcademicHudPage() {
                     { id: 'ec-5', code: 'MA301', name: 'Probability & Random Processes', type: 'standard', credits: 3, icaMarks: 38, seeMarks: 74, isLocked: false },
                   ]);
                   setShowPresetModal(false);
-                  showToast('Loaded NMIMS Electronics / EXTC Sem 3');
+                  showToast('Loaded NMIMS Electronics Sample');
                 }}
-                className="w-full p-3 text-left rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all"
+                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
               >
-                <div className="text-xs font-bold text-white font-mono">
+                <div className="text-xs font-bold text-slate-900 dark:text-white">
                   NMIMS Electronics / EXTC (Sem 3)
                 </div>
-                <div className="text-[11px] text-neutral-400 mt-0.5">
-                  5 Courses Â· 16 Credits Â· Signals, Analog Circuits, Embedded Lab
+                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                  5 Courses · 16 Credits · Signals, Analog Circuits, Embedded Lab
                 </div>
               </button>
 
@@ -557,15 +611,15 @@ export default function AcademicHudPage() {
                     { id: 'mb-4', code: 'MT504', name: 'Supply Chain Optimization', type: 'standard', credits: 3, icaMarks: 35, seeMarks: 68, isLocked: false },
                   ]);
                   setShowPresetModal(false);
-                  showToast('Loaded NMIMS MBA Tech Sem 5');
+                  showToast('Loaded NMIMS MBA Tech Sample');
                 }}
-                className="w-full p-3 text-left rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all"
+                className="w-full p-3 text-left rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/[0.03] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/[0.08] transition-all cursor-pointer"
               >
-                <div className="text-xs font-bold text-white font-mono">
+                <div className="text-xs font-bold text-slate-900 dark:text-white">
                   NMIMS MBA Tech / Management (Sem 5)
                 </div>
-                <div className="text-[11px] text-neutral-400 mt-0.5">
-                  4 Courses Â· 13 Credits Â· Financial Analytics, PM Studio, Cloud
+                <div className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                  4 Courses · 13 Credits · Financial Analytics, PM Studio, Cloud
                 </div>
               </button>
             </div>
@@ -575,4 +629,3 @@ export default function AcademicHudPage() {
     </div>
   );
 }
-

@@ -1,53 +1,64 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
-    --bg-canvas: #090a0f;
-    --bg-surface: #11131a;
-    --bg-surface-elevated: #161922;
-    --border-subtle: rgba(255, 255, 255, 0.07);
-    --border-hover: rgba(255, 255, 255, 0.14);
-    --text-primary: #ededed;
-    --text-secondary: #8a8f98;
-    --text-muted: #565b65;
-    --accent-cyan: #06b6d4;
-    --accent-cyan-glow: rgba(6, 182, 212, 0.15);
-    --accent-indigo: #6366f1;
-    --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-rose: #f43f5e;
-  }
-
-  .light {
-    --bg-canvas: #f9f9f8;
+    --bg-canvas: #f8f9fa;
     --bg-surface: #ffffff;
-    --bg-surface-elevated: #f3f3f1;
+    --bg-surface-elevated: #f1f3f5;
     --border-subtle: rgba(0, 0, 0, 0.08);
     --border-hover: rgba(0, 0, 0, 0.16);
-    --text-primary: #121316;
-    --text-secondary: #575a61;
-    --text-muted: #8c8f96;
-    --accent-cyan: #0891b2;
-    --accent-cyan-glow: rgba(8, 145, 178, 0.12);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent-cyan: #0284c7;
+    --accent-cyan-glow: rgba(2, 132, 199, 0.12);
     --accent-indigo: #4f46e5;
     --accent-emerald: #059669;
     --accent-amber: #d97706;
     --accent-rose: #e11d48;
   }
 
+  .dark {
+    --bg-canvas: #090a0f;
+    --bg-surface: #11131a;
+    --bg-surface-elevated: #161922;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+    --text-primary: #ededed;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #38bdf8;
+    --accent-cyan-glow: rgba(56, 189, 248, 0.15);
+    --accent-indigo: #818cf8;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+  }
+
   body {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
-    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Enforce tabular figures for all numbers */
+  /* Enforce clean tabular figures for all numbers without monospace blockiness */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Hide scrollbar for clean horizontal swiping on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Scrubbable cell indicator animation */
