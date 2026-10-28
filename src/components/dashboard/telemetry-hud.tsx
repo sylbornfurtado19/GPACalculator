@@ -141,7 +141,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
                 : telemetry.hasFailures
                 ? 'Re-attempt Required'
                 : effectiveSgpa >= 9.0
-                ? 'Outstanding Standing'
+                ? 'Outstanding'
                 : effectiveSgpa >= 8.0
                 ? 'First Class with Distinction'
                 : effectiveSgpa >= 7.0
