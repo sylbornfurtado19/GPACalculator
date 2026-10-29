@@ -674,10 +674,10 @@ export default function AcademicHudPage() {
               </div>
               <div className="space-y-0.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
-                  Batch 2025–29 Curriculum Notice (2nd Year)
+                  {currentProgObj.label} · {getBatchLabel(batch, program)} Curriculum Notice (2nd Year)
                 </h4>
                 <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed max-w-2xl">
-                  Coursera electives are not listed in the 2025–29 SRB syllabus. If you enrolled in an approved Coursera course this semester, add it to your roster with its designated credits (evaluated strictly as &apos;ICA Only&apos;).
+                  Coursera electives are not listed in the {getBatchLabel(batch, program)} SRB syllabus. If you enrolled in an approved Coursera course this semester, add it to your roster with its designated credits (evaluated strictly as &apos;ICA Only&apos;).
                 </p>
               </div>
             </div>
@@ -699,10 +699,10 @@ export default function AcademicHudPage() {
               </div>
               <div className="space-y-0.5">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-sky-900 dark:text-cyan-300">
-                  Batch 2024–28 Curriculum Notice (3rd &amp; 4th Year)
+                  {currentProgObj.label} · {getBatchLabel(batch, program)} Curriculum Notice (3rd &amp; 4th Year)
                 </h4>
                 <p className="text-xs text-sky-800 dark:text-cyan-200/90 leading-relaxed max-w-2xl">
-                  Neither Coursera nor Design Experience are part of the standard 2024–28 SRB document. If your department assigned either course this semester, use the quick shortcuts below to add them (both evaluated as &apos;ICA Only&apos;).
+                  Neither Coursera nor Design Experience are part of the standard {getBatchLabel(batch, program)} SRB document. If your department assigned either course this semester, use the quick shortcuts below to add them (both evaluated as &apos;ICA Only&apos;).
                 </p>
               </div>
             </div>
@@ -729,7 +729,7 @@ export default function AcademicHudPage() {
           <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl bg-indigo-50/70 dark:bg-white/[0.03] border border-indigo-200/60 dark:border-white/[0.08] text-xs text-indigo-950 dark:text-neutral-300">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-cyan-400 shrink-0" />
-              <span className="font-semibold text-indigo-900 dark:text-white">Batch 2026–30:</span>
+              <span className="font-semibold text-indigo-900 dark:text-white">{currentProgObj.label} · {getBatchLabel(batch, program)}:</span>
               <span className="text-slate-600 dark:text-neutral-400">
                 Mandatory Coursera electives and credits are already integrated into your official SRB curriculum as ICA-Only courses.
               </span>

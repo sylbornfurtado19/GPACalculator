@@ -284,24 +284,24 @@ export function BranchSemesterModal({
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-0.5 text-[11px] leading-relaxed">
               <span className="font-semibold">{activeProgObj.label} · {getBatchLabel(selectedBatch, selectedProgram)}: </span>
+              {selectedBatch === "2026" && (
+                <span>Official syllabus active. Mandatory Coursera credits (1–2 cr) and Design Experience are built into your semester courses.</span>
+              )}
+              {selectedBatch === "2025" && (
+                <span>Includes Design Experience, but Coursera is not printed in the 2025 SRB. If completed, please add your Coursera credits manually via dashboard.</span>
+              )}
+              {selectedBatch === "2024" && (
+                <span>Neither Coursera nor Design Experience are in the 2024 SRB. If completed, please add them manually using &apos;+ Add Subject&apos;.</span>
+              )}
               {selectedProgram === "mbatech" && (
-                <span>10 Semesters total (core engineering + business foundations in Sem 1–8, management &amp; internship in Sem 9–10).</span>
+                <div className="mt-0.5 opacity-90 text-[10px]">
+                  5-Year Integrated Program (10 Semesters): Sems 1–8 cover engineering &amp; business foundations; Sems 9–10 cover management electives and 16-week management internship.
+                </div>
               )}
               {selectedProgram === "diploma" && (
-                <span>6 Semesters total (concluding with in-plant industrial training in Semester 6).</span>
-              )}
-              {selectedProgram === "btech" && (
-                <>
-                  {selectedBatch === "2026" && (
-                    <span>Coursera credits and &apos;Only ICA&apos; evaluation are directly included in your syllabus.</span>
-                  )}
-                  {selectedBatch === "2025" && (
-                    <span>Coursera is not printed in the 2025 SRB. You can add it with 1-click on your dashboard.</span>
-                  )}
-                  {selectedBatch === "2024" && (
-                    <span>Coursera and Design Experience are manual for 2024. 1-click shortcuts are on your dashboard.</span>
-                  )}
-                </>
+                <div className="mt-0.5 opacity-90 text-[10px]">
+                  3-Year Diploma (6 Semesters) concluding with in-plant industrial training in Semester 6.
+                </div>
               )}
             </div>
           </div>
