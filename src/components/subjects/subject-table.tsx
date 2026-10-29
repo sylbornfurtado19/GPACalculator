@@ -31,81 +31,82 @@ export function SubjectTable({
   onDelete,
 }: SubjectTableProps) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xs">
+    <div className="w-full overflow-x-auto rounded-2xl border border-border-subtle glass-panel shadow-xs select-none">
       <table className="w-full text-left text-xs border-collapse">
         <thead>
-          <tr className="border-b border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">
+          <tr className="border-b border-border-subtle bg-surface-elevated/60 text-secondary font-bold uppercase tracking-wider text-[10px]">
             <th className="p-3.5">Subject</th>
             <th className="p-3.5 text-center">Type</th>
             <th className="p-3.5 text-center">Credits</th>
             <th className="p-3.5">ICA (Max 50)</th>
-            <th className="p-3.5">SEE/TEE (Max 100)</th>
+            <th className="p-3.5">SEE (Max 100)</th>
             <th className="p-3.5 text-center">Total %</th>
             <th className="p-3.5 text-center">Grade</th>
             <th className="p-3.5 text-center">Status</th>
             <th className="p-3.5 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--border-subtle)]">
+        <tbody className="divide-y divide-border-subtle">
           {subjects.map((sub) => {
             const isStandard = sub.courseType === "standard";
             return (
               <tr
                 key={sub.id}
-                className="hover:bg-[var(--bg-surface)]/60 transition-colors"
+                className="hover:bg-surface-elevated/40 transition-colors"
               >
                 {/* Subject Name & Code */}
-                <td className="p-3.5">
-                  <div className="font-semibold text-[var(--text-primary)]">
+                <td className="p-3.5 max-w-[200px]">
+                  <div className="font-semibold text-primary truncate">
                     {sub.name}
                   </div>
                   {sub.code && (
-                    <div className="font-mono text-[11px] text-[var(--text-muted)]">
+                    <div className="font-mono text-[11px] text-muted">
                       {sub.code}
                     </div>
                   )}
                   {sub.status === "fail" && sub.failureReasons.length > 0 && (
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-[var(--danger)]">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{sub.failureReasons[0]}</span>
+                    <div className="mt-1 flex items-center gap-1 text-[11px] text-rose-500 font-medium">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{sub.failureReasons[0]}</span>
                     </div>
                   )}
                 </td>
 
                 {/* Course Type */}
-                <td className="p-3.5 text-center">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
-                    {isStandard ? "Standard" : "ICA-Only"}
+                <td className="p-3.5 text-center whitespace-nowrap">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-surface-elevated text-secondary border border-border-subtle">
+                    {isStandard ? "Standard" : "Only ICA"}
                   </span>
                 </td>
 
                 {/* Credits */}
-                <td className="p-3.5 text-center font-mono font-semibold text-[var(--primary)]">
+                <td className="p-3.5 text-center font-mono font-bold text-indigo-500 dark:text-cyan-400 tabular-nums">
                   {sub.credits}
                 </td>
 
                 {/* ICA Input & Lock */}
-                <td className="p-3.5">
-                  <div className="flex items-center gap-2">
+                <td className="p-3.5 whitespace-nowrap">
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="number"
                       min={0}
                       max={sub.icaMax}
                       value={sub.icaMarks}
+                      inputMode="decimal"
                       disabled={sub.isIcaLocked || sub.isIcaAbsent}
                       onChange={(e) =>
                         onUpdateMarks(sub.id, Number(e.target.value), sub.seeMarks)
                       }
-                      className="w-16 px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-surface)] text-center font-mono text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
+                      className="w-16 px-2 py-1 rounded-lg border border-border-subtle bg-surface text-center font-mono text-xs font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-40"
                     />
                     <button
                       type="button"
                       onClick={() => onToggleLock(sub.id, "isIcaLocked")}
                       title={sub.isIcaLocked ? "Unlock ICA" : "Lock ICA"}
-                      className={`p-1 rounded cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
                         sub.isIcaLocked
-                          ? "text-[var(--primary)] bg-[var(--primary-subtle)]"
-                          : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          ? "text-amber-500 bg-amber-500/10 border border-amber-500/20"
+                          : "text-muted hover:text-secondary hover:bg-surface-elevated"
                       }`}
                     >
                       {sub.isIcaLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
@@ -114,40 +115,41 @@ export function SubjectTable({
                 </td>
 
                 {/* SEE Input & Lock */}
-                <td className="p-3.5">
+                <td className="p-3.5 whitespace-nowrap">
                   {isStandard ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <input
                         type="number"
                         min={0}
                         max={sub.seeMax}
                         value={sub.seeMarks}
+                        inputMode="decimal"
                         disabled={sub.isSeeLocked || sub.isSeeAbsent}
                         onChange={(e) =>
                           onUpdateMarks(sub.id, sub.icaMarks, Number(e.target.value))
                         }
-                        className="w-16 px-2 py-1 rounded border border-[var(--border-color)] bg-[var(--bg-surface)] text-center font-mono text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:opacity-50"
+                        className="w-16 px-2 py-1 rounded-lg border border-border-subtle bg-surface text-center font-mono text-xs font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-40"
                       />
                       <button
                         type="button"
                         onClick={() => onToggleLock(sub.id, "isSeeLocked")}
                         title={sub.isSeeLocked ? "Unlock SEE" : "Lock SEE"}
-                        className={`p-1 rounded cursor-pointer transition-colors ${
+                        className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
                           sub.isSeeLocked
-                            ? "text-[var(--primary)] bg-[var(--primary-subtle)]"
-                            : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                            ? "text-amber-500 bg-amber-500/10 border border-amber-500/20"
+                            : "text-muted hover:text-secondary hover:bg-surface-elevated"
                         }`}
                       >
                         {sub.isSeeLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   ) : (
-                    <span className="text-[11px] text-[var(--text-muted)] italic">N/A (Doubled ICA)</span>
+                    <span className="text-[11px] text-muted italic">N/A (ICA × 2)</span>
                   )}
                 </td>
 
                 {/* Total % */}
-                <td className="p-3.5 text-center font-mono font-bold text-[var(--text-primary)]">
+                <td className="p-3.5 text-center font-mono font-bold text-primary tabular-nums">
                   {formatPercent(sub.finalPercentage)}
                 </td>
 
@@ -155,7 +157,7 @@ export function SubjectTable({
                 <td className="p-3.5 text-center">
                   <div className="flex flex-col items-center">
                     <GradeBadge grade={sub.grade} size="sm" />
-                    <span className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
+                    <span className="text-[10px] text-muted font-mono mt-0.5 tabular-nums">
                       {sub.gradePoints} pts
                     </span>
                   </div>
@@ -167,13 +169,13 @@ export function SubjectTable({
                 </td>
 
                 {/* Actions */}
-                <td className="p-3.5 text-right">
+                <td className="p-3.5 text-right whitespace-nowrap">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
                       onClick={() => onDuplicate(sub.id)}
                       title="Duplicate"
-                      className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-surface-elevated text-secondary hover:text-primary transition-colors cursor-pointer"
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
@@ -181,7 +183,7 @@ export function SubjectTable({
                       type="button"
                       onClick={() => onEdit(sub)}
                       title="Edit"
-                      className="p-1 rounded hover:bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-surface-elevated text-secondary hover:text-primary transition-colors cursor-pointer"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
@@ -189,7 +191,7 @@ export function SubjectTable({
                       type="button"
                       onClick={() => onDelete(sub.id)}
                       title="Delete"
-                      className="p-1 rounded hover:bg-[var(--danger-bg)] text-[var(--danger)] transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-rose-500/10 text-rose-500 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

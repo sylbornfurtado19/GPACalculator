@@ -34,15 +34,15 @@ export default function CalculatorPage() {
     loadPreset,
   } = useAcademic();
 
-  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
   if (!isHydrated) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
-        <p className="text-xs text-[var(--text-secondary)] font-medium">
+      <div className="py-24 flex flex-col items-center justify-center space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
+        <p className="text-xs text-secondary font-medium">
           Loading GPA Calculator...
         </p>
       </div>
@@ -73,56 +73,58 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2.5">
-            <Calculator className="w-6 h-6 text-[var(--primary)]" />
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-primary flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <Calculator className="w-5 h-5" />
+            </div>
             Interactive GPA Estimator
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            Real-time evaluation with instant feedback when crossing discrete NMIMS grade boundaries.
+          <p className="text-xs text-secondary mt-1">
+            Real-time NMIMS marks tuning with live boundary feedback, locked states, and What-If analysis.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="flex items-center p-1 rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)]">
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`p-1.5 rounded-md text-xs transition-colors cursor-pointer ${
-                viewMode === "table"
-                  ? "bg-[var(--primary)] text-white shadow-xs"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-              title="Table view"
-            >
-              <List className="w-4 h-4" />
-            </button>
+          <div className="flex items-center p-1 rounded-xl border border-border-subtle glass-panel shadow-xs">
             <button
               type="button"
               onClick={() => setViewMode("cards")}
-              className={`p-1.5 rounded-md text-xs transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === "cards"
-                  ? "bg-[var(--primary)] text-white shadow-xs"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  ? "bg-indigo-600 dark:bg-cyan-500 text-white dark:text-black shadow-xs font-bold"
+                  : "text-secondary hover:text-primary"
               }`}
-              title="Card view with sliders"
+              title="Card view with interactive sliders"
             >
               <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`p-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === "table"
+                  ? "bg-indigo-600 dark:bg-cyan-500 text-white dark:text-black shadow-xs font-bold"
+                  : "text-secondary hover:text-primary"
+              }`}
+              title="Dense spreadsheet table view"
+            >
+              <List className="w-4 h-4" />
             </button>
           </div>
 
           <Button onClick={handleOpenAddModal} size="sm">
-            <PlusCircle className="w-4 h-4 mr-1.5" />
+            <PlusCircle className="w-4 h-4 mr-1" />
             Add Subject
           </Button>
 
           <Link href="/planner">
             <Button variant="secondary" size="sm">
-              <Target className="w-4 h-4 mr-1.5 text-[var(--primary)]" />
+              <Target className="w-4 h-4 mr-1 text-indigo-500 dark:text-cyan-400" />
               Target Planner
             </Button>
           </Link>
@@ -130,45 +132,59 @@ export default function CalculatorPage() {
       </div>
 
       {/* Quick Summary Pill Bar */}
-      <Card className="border-[var(--border-color)] bg-[var(--bg-card)]">
+      <Card className="glass-panel">
         <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-6">
             <div>
-              <span className="text-[var(--text-muted)] text-[11px] block font-semibold uppercase">
+              <span className="text-muted text-[10px] block font-bold uppercase tracking-wider">
                 Current SGPA
               </span>
-              <span className="text-xl font-bold font-mono text-[var(--primary)]">
+              <span
+                className={`font-display text-2xl font-extrabold font-mono tabular-nums ${
+                  summary.sgpa >= 9
+                    ? "text-emerald-500"
+                    : summary.sgpa >= 8
+                    ? "text-cyan-500"
+                    : summary.sgpa >= 7
+                    ? "text-indigo-500"
+                    : summary.sgpa >= 5
+                    ? "text-amber-500"
+                    : "text-rose-500"
+                }`}
+              >
                 {formatGpa(summary.sgpa)}
               </span>
             </div>
-            <div className="border-l border-[var(--border-subtle)] pl-4">
-              <span className="text-[var(--text-muted)] text-[11px] block font-semibold uppercase">
+            <div className="border-l border-border-subtle pl-4">
+              <span className="text-muted text-[10px] block font-bold uppercase tracking-wider">
                 Target SGPA
               </span>
-              <span className="text-xl font-bold font-mono text-[var(--text-primary)]">
+              <span className="font-display text-2xl font-extrabold font-mono text-primary tabular-nums">
                 {formatGpa(targetSgpa)}
               </span>
             </div>
-            <div className="border-l border-[var(--border-subtle)] pl-4">
-              <span className="text-[var(--text-muted)] text-[11px] block font-semibold uppercase">
-                Registered Credits
+            <div className="border-l border-border-subtle pl-4">
+              <span className="text-muted text-[10px] block font-bold uppercase tracking-wider">
+                Credits Enrolled
               </span>
-              <span className="text-xl font-bold font-mono text-[var(--text-primary)]">
+              <span className="font-display text-2xl font-extrabold font-mono text-primary tabular-nums">
                 {summary.totalCredits}
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[var(--text-secondary)]">Status:</span>
+            <span className="text-secondary text-xs">Compliance:</span>
             <span
-              className={`font-semibold ${
-                summary.allPassed ? "text-[var(--success)]" : "text-[var(--danger)]"
+              className={`font-semibold px-2.5 py-0.5 rounded-full text-xs border ${
+                summary.allPassed
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
               }`}
             >
               {summary.allPassed
-                ? "All courses passing"
-                : `${summary.failedSubjects + summary.absentSubjects} courses need attention`}
+                ? "100% Minimum Criteria Met"
+                : `${summary.failedSubjects + summary.absentSubjects} Attention Required`}
             </span>
           </div>
         </CardContent>
@@ -197,6 +213,7 @@ export default function CalculatorPage() {
                 <SubjectCard
                   key={sub.id}
                   subject={sub}
+                  totalSemesterCredits={summary.totalCredits}
                   onUpdateMarks={handleUpdateMarks}
                   onToggleLock={handleToggleLock}
                   onEdit={handleEdit}
