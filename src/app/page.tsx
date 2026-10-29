@@ -30,7 +30,6 @@ import {
 import { generateAcademicPdf } from '../lib/pdf-export';
 import { BranchSemesterModal } from '../components/branch-semester-modal';
 import {
-  BATCHES,
   BRANCHES,
   PROGRAMS,
   ProgramType,
@@ -151,34 +150,18 @@ export default function AcademicHudPage() {
   });
 
   // Modal opens automatically on launch if no branch is chosen yet
-  const [showBranchModal, setShowBranchModal] = useState<boolean>(false);
+  const [showBranchModal, setShowBranchModal] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem('nmims_user_branch');
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedVersion = localStorage.getItem('nmims_app_version');
       if (storedVersion !== APP_RELEASE_VERSION) {
-        // App update: reset all preferences
-        localStorage.removeItem('nmims_user_courses');
-        localStorage.removeItem('nmims_hud_courses');
-        localStorage.removeItem('nmims_user_batch');
-        localStorage.removeItem('nmims_user_program');
-        localStorage.removeItem('nmims_user_branch');
-        localStorage.removeItem('nmims_user_semester');
-        localStorage.removeItem('nmims_gpa_calculator_v1');
-        localStorage.removeItem('nmims_gpa_calculator_v2');
         localStorage.setItem('nmims_app_version', APP_RELEASE_VERSION);
-
-        setCourses([]);
-        setBatch('2026');
-        setProgram('btech');
-        setBranch('');
-        setSemester(1);
-        setShowBranchModal(true);
-      } else {
-        const savedBranch = localStorage.getItem('nmims_user_branch');
-        if (!savedBranch) {
-          setShowBranchModal(true);
-        }
       }
     }
   }, []);
@@ -186,11 +169,6 @@ export default function AcademicHudPage() {
   const currentBranchObj = useMemo(
     () => BRANCHES.find((b) => b.id === branch),
     [branch]
-  );
-
-  const currentBatchObj = useMemo(
-    () => BATCHES.find((b) => b.id === batch),
-    [batch]
   );
 
   const currentProgObj = useMemo(
