@@ -29,9 +29,16 @@ import {
 } from 'lucide-react';
 import { generateAcademicPdf } from '../lib/pdf-export';
 import { BranchSemesterModal } from '../components/branch-semester-modal';
-import { BATCHES, BRANCHES, getCurriculum } from '../lib/srb-database';
+import {
+  BATCHES,
+  BRANCHES,
+  PROGRAMS,
+  ProgramType,
+  getBatchLabel,
+  getCurriculum,
+} from '../lib/srb-database';
 
-const APP_RELEASE_VERSION = 'v3_srb_batch_release';
+const APP_RELEASE_VERSION = 'v4_program_mbatech_diploma_release';
 
 export default function AcademicHudPage() {
   // Theme state: defaults to off-white 'light'
@@ -52,6 +59,7 @@ export default function AcademicHudPage() {
         localStorage.removeItem('nmims_user_courses');
         localStorage.removeItem('nmims_hud_courses');
         localStorage.removeItem('nmims_user_batch');
+        localStorage.removeItem('nmims_user_program');
         localStorage.removeItem('nmims_user_branch');
         localStorage.removeItem('nmims_user_semester');
         localStorage.removeItem('nmims_gpa_calculator_v1');
@@ -101,7 +109,7 @@ export default function AcademicHudPage() {
   const [showScaleModal, setShowScaleModal] = useState<boolean>(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
 
-  // Batch, Branch & Semester state
+  // Batch, Program, Branch & Semester state
   const [batch, setBatch] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const storedVersion = localStorage.getItem('nmims_app_version');
@@ -109,6 +117,15 @@ export default function AcademicHudPage() {
       return localStorage.getItem('nmims_user_batch') || '2026';
     }
     return '2026';
+  });
+
+  const [program, setProgram] = useState<ProgramType>(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) return 'btech';
+      return (localStorage.getItem('nmims_user_program') as ProgramType) || 'btech';
+    }
+    return 'btech';
   });
 
   const [branch, setBranch] = useState<string>(() => {
@@ -144,6 +161,7 @@ export default function AcademicHudPage() {
         localStorage.removeItem('nmims_user_courses');
         localStorage.removeItem('nmims_hud_courses');
         localStorage.removeItem('nmims_user_batch');
+        localStorage.removeItem('nmims_user_program');
         localStorage.removeItem('nmims_user_branch');
         localStorage.removeItem('nmims_user_semester');
         localStorage.removeItem('nmims_gpa_calculator_v1');
@@ -152,6 +170,7 @@ export default function AcademicHudPage() {
 
         setCourses([]);
         setBatch('2026');
+        setProgram('btech');
         setBranch('');
         setSemester(1);
         setShowBranchModal(true);
@@ -174,25 +193,33 @@ export default function AcademicHudPage() {
     [batch]
   );
 
+  const currentProgObj = useMemo(
+    () => PROGRAMS.find((p) => p.id === program) || PROGRAMS[0],
+    [program]
+  );
+
   const handleBatchBranchSemesterSelect = (
     selectedBatch: string,
+    selectedProgram: ProgramType,
     selectedBranch: string,
     selectedSemester: number
   ) => {
     setBatch(selectedBatch);
+    setProgram(selectedProgram);
     setBranch(selectedBranch);
     setSemester(selectedSemester);
     if (typeof window !== 'undefined') {
       localStorage.setItem('nmims_user_batch', selectedBatch);
+      localStorage.setItem('nmims_user_program', selectedProgram);
       localStorage.setItem('nmims_user_branch', selectedBranch);
       localStorage.setItem('nmims_user_semester', selectedSemester.toString());
     }
 
     // Load official SRB courses from the srb-database
-    const srbCourses = getCurriculum(selectedBatch, selectedBranch, selectedSemester);
+    const srbCourses = getCurriculum(selectedBatch, selectedBranch, selectedSemester, selectedProgram);
     if (srbCourses && srbCourses.length > 0) {
       const loadedCourses: Course[] = srbCourses.map((s, idx) => ({
-        id: `c-${selectedBatch}-${selectedBranch}-s${selectedSemester}-${idx}-${Date.now()}`,
+        id: `c-${selectedBatch}-${selectedProgram}-${selectedBranch}-s${selectedSemester}-${idx}-${Date.now()}`,
         code: s.code,
         name: s.name,
         type: s.type,
@@ -207,9 +234,9 @@ export default function AcademicHudPage() {
     setShowBranchModal(false);
     const branchObj = BRANCHES.find((b) => b.id === selectedBranch);
     const branchName = branchObj ? branchObj.code : selectedBranch.toUpperCase();
-    const batchObj = BATCHES.find((b) => b.id === selectedBatch);
-    const batchName = batchObj ? batchObj.label : `Batch ${selectedBatch}`;
-    showToast(`Loaded ${batchName} · ${branchName} · Semester ${selectedSemester}`);
+    const progObj = PROGRAMS.find((p) => p.id === selectedProgram) || PROGRAMS[0];
+    const batchLabel = getBatchLabel(selectedBatch, selectedProgram);
+    showToast(`Loaded ${progObj.code} · ${batchLabel} · ${branchName} · Sem ${selectedSemester}`);
   };
 
   // Sync theme to document and persist locally
@@ -405,6 +432,7 @@ export default function AcademicHudPage() {
   const handleReset = () => {
     setCourses([]);
     setBatch('2026');
+    setProgram('btech');
     setBranch('');
     setSemester(1);
     setActiveScenario('none');
@@ -413,12 +441,13 @@ export default function AcademicHudPage() {
     localStorage.removeItem('nmims_user_courses');
     localStorage.removeItem('nmims_hud_courses');
     localStorage.removeItem('nmims_user_batch');
+    localStorage.removeItem('nmims_user_program');
     localStorage.removeItem('nmims_user_branch');
     localStorage.removeItem('nmims_user_semester');
     localStorage.removeItem('nmims_gpa_calculator_v1');
     localStorage.removeItem('nmims_gpa_calculator_v2');
     setShowBranchModal(true);
-    showToast('Reset all preferences & subjects. Please select your batch, branch & semester!');
+    showToast('Reset all preferences & subjects. Please select your program, batch, branch & semester!');
   };
 
   const unlockedCount = courses.filter((c) => !c.isLocked).length;
@@ -468,12 +497,13 @@ export default function AcademicHudPage() {
             <button
               onClick={() => setShowBranchModal(true)}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-cyan-400 border border-indigo-200/80 dark:border-white/[0.08] text-xs font-semibold transition-all cursor-pointer"
-              title="Change Batch, Branch & Semester"
+              title="Change Program, Batch, Branch & Semester"
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>
                 {batch ? `'${batch.slice(-2)} ` : ''}
-                {currentBranchObj ? currentBranchObj.code : (branch ? branch.toUpperCase() : 'Select Curriculum')}
+                {program !== 'btech' ? `${currentProgObj.code} ` : ''}
+                {currentBranchObj ? currentBranchObj.code : (branch ? branch.toUpperCase() : 'Curriculum')}
                 {branch ? ` · Sem ${semester}` : ''}
               </span>
               <ChevronDown className="w-3 h-3 opacity-60" />
@@ -573,7 +603,10 @@ export default function AcademicHudPage() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-slate-600 dark:text-neutral-400">Curriculum:</span>
               <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 font-bold text-indigo-700 dark:text-cyan-400 border border-indigo-200/60 dark:border-cyan-500/20">
-                {currentBatchObj?.label || `Batch ${batch}`}
+                {getBatchLabel(batch, program)}
+              </span>
+              <span className="px-2 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-500/10 font-bold text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-500/20 text-[11px]">
+                {currentProgObj.label}
               </span>
               <span className="text-slate-300 dark:text-neutral-600">·</span>
               <span className="font-bold text-slate-900 dark:text-white">
@@ -793,6 +826,7 @@ export default function AcademicHudPage() {
       <BranchSemesterModal
         isOpen={showBranchModal}
         currentBatch={batch}
+        currentProgram={program}
         currentBranch={branch}
         currentSemester={semester}
         isDismissable={Boolean(branch)}

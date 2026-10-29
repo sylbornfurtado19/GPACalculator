@@ -1,26 +1,27 @@
 "use client";
 
 import React, { useState } from "react";
-import { GraduationCap, BookOpen, Layers, CheckCircle2, ChevronRight, X, Calendar, AlertCircle } from "lucide-react";
-import { BATCHES, BRANCHES, BatchOption, BranchOption } from "../lib/srb-database";
+import { GraduationCap, BookOpen, Layers, CheckCircle2, ChevronRight, X, Calendar, AlertCircle, Award } from "lucide-react";
+import {
+  BATCHES,
+  BRANCHES,
+  PROGRAMS,
+  ProgramType,
+  getBatchLabel,
+} from "../lib/srb-database";
 
-export const SEMESTERS = [
-  { id: 1, label: "Semester 1" },
-  { id: 2, label: "Semester 2" },
-  { id: 3, label: "Semester 3" },
-  { id: 4, label: "Semester 4" },
-  { id: 5, label: "Semester 5" },
-  { id: 6, label: "Semester 6" },
-  { id: 7, label: "Semester 7" },
-  { id: 8, label: "Semester 8" },
-];
+export const ALL_SEMESTERS = Array.from({ length: 10 }, (_, i) => ({
+  id: i + 1,
+  label: `Sem ${i + 1}`,
+}));
 
 interface Props {
   isOpen: boolean;
   currentBatch?: string;
+  currentProgram?: ProgramType;
   currentBranch?: string;
   currentSemester?: number;
-  onSelect: (batchId: string, branchId: string, semesterId: number) => void;
+  onSelect: (batchId: string, programId: ProgramType, branchId: string, semesterId: number) => void;
   onClose?: () => void;
   isDismissable?: boolean;
 }
@@ -28,6 +29,7 @@ interface Props {
 export function BranchSemesterModal({
   isOpen,
   currentBatch = "2026",
+  currentProgram = "btech",
   currentBranch = "ce",
   currentSemester = 1,
   onSelect,
@@ -35,18 +37,31 @@ export function BranchSemesterModal({
   isDismissable = true,
 }: Props) {
   const [selectedBatch, setSelectedBatch] = useState<string>(currentBatch || "2026");
+  const [selectedProgram, setSelectedProgram] = useState<ProgramType>(currentProgram || "btech");
   const [selectedBranch, setSelectedBranch] = useState<string>(currentBranch || "ce");
   const [selectedSemester, setSelectedSemester] = useState<number>(currentSemester || 1);
 
   if (!isOpen) return null;
 
+  const activeProgObj = PROGRAMS.find((p) => p.id === selectedProgram) || PROGRAMS[0];
+
+  const handleProgramChange = (progId: ProgramType) => {
+    setSelectedProgram(progId);
+    const targetProg = PROGRAMS.find((p) => p.id === progId);
+    if (targetProg && selectedSemester > targetProg.semestersCount) {
+      setSelectedSemester(1);
+    }
+  };
+
   const handleConfirm = () => {
-    if (!selectedBatch || !selectedBranch || !selectedSemester) return;
-    onSelect(selectedBatch, selectedBranch, selectedSemester);
+    if (!selectedBatch || !selectedProgram || !selectedBranch || !selectedSemester) return;
+    onSelect(selectedBatch, selectedProgram, selectedBranch, selectedSemester);
   };
 
   const activeBatchObj = BATCHES.find((b) => b.id === selectedBatch);
   const activeBranchObj = BRANCHES.find((b) => b.id === selectedBranch);
+
+  const availableSemesters = ALL_SEMESTERS.slice(0, activeProgObj.semestersCount);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
@@ -65,7 +80,7 @@ export function BranchSemesterModal({
                 Select Academic Curriculum
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-neutral-400 line-clamp-1">
-                Auto-loads official syllabus courses and credits
+                Choose degree program, batch, branch and semester
               </p>
             </div>
           </div>
@@ -83,12 +98,53 @@ export function BranchSemesterModal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3 sm:py-4 space-y-4 sm:space-y-5 touch-pan-y">
-          {/* Step 1: Batch / Year Selection */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-3 sm:py-4 space-y-4 touch-pan-y">
+          {/* Step 1: Degree Program Selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 1. Admission Batch
+                <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 1. Degree Program
+              </label>
+              <span className="text-[10px] text-indigo-600 dark:text-cyan-400 font-medium">
+                {activeProgObj.fullName}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+              {PROGRAMS.map((prog) => {
+                const active = selectedProgram === prog.id;
+                return (
+                  <button
+                    key={prog.id}
+                    type="button"
+                    onClick={() => handleProgramChange(prog.id)}
+                    className={`text-left p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all text-xs flex flex-col justify-between gap-1 relative cursor-pointer active:scale-[0.98] min-h-[64px] sm:min-h-[72px] ${
+                      active
+                        ? "border-indigo-600 dark:border-cyan-500 bg-indigo-50/80 dark:bg-cyan-500/15 text-indigo-950 dark:text-cyan-100 font-semibold ring-2 ring-indigo-500/20 dark:ring-cyan-500/20 shadow-xs"
+                        : "border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] text-slate-700 dark:text-neutral-300 bg-slate-50/60 dark:bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-bold text-xs sm:text-sm tracking-tight">{prog.label}</span>
+                      {active && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400 shrink-0" />}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400 leading-tight">
+                      {prog.semestersCount} Semesters
+                    </span>
+                    <span className="text-[9px] text-slate-400 dark:text-neutral-500 line-clamp-1">
+                      {prog.durationYears} Years
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Step 2: Batch / Year Selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 2. Admission Batch
               </label>
               <span className="text-[10px] text-indigo-600 dark:text-cyan-400 font-medium">
                 {activeBatchObj?.yearLabel || "Select Batch"}
@@ -98,6 +154,7 @@ export function BranchSemesterModal({
             <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {BATCHES.map((b) => {
                 const active = selectedBatch === b.id;
+                const batchDisplayLabel = getBatchLabel(b.id, selectedProgram);
                 return (
                   <button
                     key={b.id}
@@ -110,7 +167,7 @@ export function BranchSemesterModal({
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-bold text-xs sm:text-sm tracking-tight">{b.label}</span>
+                      <span className="font-bold text-xs sm:text-sm tracking-tight">{batchDisplayLabel}</span>
                       {active && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400 shrink-0" />}
                     </div>
                     <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400 leading-tight">
@@ -131,18 +188,18 @@ export function BranchSemesterModal({
             </div>
           </div>
 
-          {/* Step 2: Branch Selection */}
+          {/* Step 3: Branch Selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 2. Department / Branch
+                <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 3. Department / Branch
               </label>
               <span className="text-[10px] text-indigo-600 dark:text-cyan-400 font-medium">
                 {activeBranchObj?.name || "Select Branch"}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 max-h-48 sm:max-h-52 overflow-y-auto overscroll-contain pr-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 max-h-44 sm:max-h-48 overflow-y-auto overscroll-contain pr-1">
               {BRANCHES.map((b) => {
                 const active = selectedBranch === b.id;
                 return (
@@ -169,19 +226,27 @@ export function BranchSemesterModal({
             </div>
           </div>
 
-          {/* Step 3: Semester Selection */}
+          {/* Step 4: Semester Selection (Adaptive to Degree Program) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-neutral-400 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 3. Current Semester
+                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" /> 4. Current Semester ({availableSemesters.length} Total)
               </label>
               <span className="text-[10px] text-indigo-600 dark:text-cyan-400 font-medium">
                 Semester {selectedSemester}
               </span>
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-              {SEMESTERS.map((s) => {
+            <div
+              className={`grid gap-1.5 ${
+                selectedProgram === "mbatech"
+                  ? "grid-cols-5"
+                  : selectedProgram === "diploma"
+                  ? "grid-cols-3 sm:grid-cols-6"
+                  : "grid-cols-4 sm:grid-cols-8"
+              }`}
+            >
+              {availableSemesters.map((s) => {
                 const active = selectedSemester === s.id;
                 return (
                   <button
@@ -201,37 +266,45 @@ export function BranchSemesterModal({
             </div>
           </div>
 
-          {/* Dynamic Batch Note */}
-          {activeBatchObj && (
-            <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200">
-              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-0.5 text-[11px] leading-relaxed">
-                <span className="font-semibold">{activeBatchObj.label} Note: </span>
-                {selectedBatch === "2026" && (
-                  <span>Coursera credits and &apos;Only ICA&apos; evaluation are directly included in your syllabus courses.</span>
-                )}
-                {selectedBatch === "2025" && (
-                  <span>Coursera is not printed in the 2025 SRB. You can easily add it to your subject list with one click from your dashboard.</span>
-                )}
-                {selectedBatch === "2024" && (
-                  <span>Coursera and Design Experience are not listed in the 2024 SRB. You can manually add both via one-click shortcuts on your dashboard.</span>
-                )}
-              </div>
+          {/* Dynamic Batch & Program Guidance Note */}
+          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5 text-[11px] leading-relaxed">
+              <span className="font-semibold">{activeProgObj.label} · {getBatchLabel(selectedBatch, selectedProgram)}: </span>
+              {selectedProgram === "mbatech" && (
+                <span>MBA Tech includes 10 semesters (core engineering + business foundations in Sem 1–8, advanced management &amp; internship in Sem 9–10).</span>
+              )}
+              {selectedProgram === "diploma" && (
+                <span>Diploma in Engineering spans 6 semesters, concluding with an in-plant industrial training in Semester 6.</span>
+              )}
+              {selectedProgram === "btech" && (
+                <>
+                  {selectedBatch === "2026" && (
+                    <span>Coursera credits and &apos;Only ICA&apos; evaluation are directly included in your syllabus courses.</span>
+                  )}
+                  {selectedBatch === "2025" && (
+                    <span>Coursera is not printed in the 2025 SRB. You can add it with 1-click on your dashboard.</span>
+                  )}
+                  {selectedBatch === "2024" && (
+                    <span>Coursera and Design Experience are not listed in the 2024 SRB. 1-click shortcuts are available on your dashboard.</span>
+                  )}
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Modal Sticky Footer Bar (Pinned at Bottom with Safe Area) */}
         <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-slate-100 dark:border-white/[0.06] bg-white/95 dark:bg-[#11131A]/95 backdrop-blur-md shrink-0">
           <button
             type="button"
-            disabled={!selectedBatch || !selectedBranch || !selectedSemester}
+            disabled={!selectedBatch || !selectedProgram || !selectedBranch || !selectedSemester}
             onClick={handleConfirm}
             className="w-full flex items-center justify-between sm:justify-center gap-2 py-3 sm:py-3.5 px-4 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md shadow-indigo-600/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
           >
             <span>Load Official SRB Curriculum</span>
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/20 dark:bg-black/20 text-[11px] font-semibold">
-              &apos;{selectedBatch.slice(-2)} · {activeBranchObj?.code || "Branch"} · Sem {selectedSemester}
+              &apos;{selectedBatch.slice(-2)} · {activeProgObj.code} · {activeBranchObj?.code || "Branch"} · Sem {selectedSemester}
               <ChevronRight className="w-3.5 h-3.5" />
             </span>
           </button>

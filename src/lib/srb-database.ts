@@ -1,4 +1,5 @@
 export type CourseType = 'standard' | 'ica_only';
+export type ProgramType = 'btech' | 'mbatech' | 'diploma';
 
 export interface SRBSubject {
   code: string;
@@ -13,6 +14,46 @@ export type SemesterCourses = Record<number, SRBSubject[]>;
 export type BranchCourses = Record<string, SemesterCourses>;
 export type BatchCurriculum = Record<string, BranchCourses>;
 
+export interface ProgramOption {
+  id: ProgramType;
+  code: string;
+  label: string;
+  fullName: string;
+  semestersCount: number;
+  durationYears: number;
+  description: string;
+}
+
+export const PROGRAMS: ProgramOption[] = [
+  {
+    id: "btech",
+    code: "B.Tech",
+    label: "B.Tech",
+    fullName: "Bachelor of Technology",
+    semestersCount: 8,
+    durationYears: 4,
+    description: "4-Year Engineering Degree · 8 Semesters",
+  },
+  {
+    id: "mbatech",
+    code: "MBA Tech",
+    label: "MBA Tech",
+    fullName: "Integrated B.Tech + MBA",
+    semestersCount: 10,
+    durationYears: 5,
+    description: "5-Year Integrated Degree · 10 Semesters",
+  },
+  {
+    id: "diploma",
+    code: "Diploma",
+    label: "Diploma",
+    fullName: "Diploma in Engineering",
+    semestersCount: 6,
+    durationYears: 3,
+    description: "3-Year Polytechnic Program · 6 Semesters",
+  },
+];
+
 export interface BatchOption {
   id: string;
   label: string;
@@ -20,6 +61,17 @@ export interface BatchOption {
   description: string;
   hasCoursera: boolean;
   hasDesignExperience: boolean;
+}
+
+export function getBatchLabel(batchId: string, programId: ProgramType = "btech"): string {
+  const startYear = parseInt(batchId, 10) || 2026;
+  if (programId === "mbatech") {
+    return `Batch ${startYear}–${(startYear + 5).toString().slice(-2)}`;
+  }
+  if (programId === "diploma") {
+    return `Batch ${startYear}–${(startYear + 3).toString().slice(-2)}`;
+  }
+  return `Batch ${startYear}–${(startYear + 4).toString().slice(-2)}`;
 }
 
 export const BATCHES: BatchOption[] = [
@@ -895,8 +947,199 @@ export const SRB_DATABASE: BatchCurriculum = {
   },
 };
 
-// Safe retrieval helper with intelligent fallback
-export function getCurriculum(batchId: string, branchId: string, semester: number): SRBSubject[] {
+// ==========================================
+// MBA TECH CURRICULUM DATABASE (SEMESTERS 1 TO 10)
+// ==========================================
+export const MBA_TECH_DATABASE: BatchCurriculum = {
+  "2026": {
+    it: {
+      1: [
+        { code: "MT101", name: "Calculus", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT102", name: "Physics", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT103", name: "Basic Electrical and Electronics Engineering", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT104", name: "Computational Thinking for Problem Solving", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT105", name: "Engineering Graphics and Design", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT106", name: "Essential Electronics Practices", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT107", name: "Principles of Management", credits: 1, type: "standard", category: "COMP" },
+        { code: "MT108", name: "Engineering Ethics", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT109", name: "Indian Knowledge System", credits: 0, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT110", name: "Constitution of India", credits: 0, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "COUC101", name: "Coursera: Google AI Essentials", credits: 1, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      2: [
+        { code: "MT201", name: "Linear Algebra and Differential Equations", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT202", name: "Quantum Physics", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT203", name: "Business Communication", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT204", name: "Elements of Biology", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT205", name: "Digital Logic Design", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT206", name: "Microeconomics", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT207", name: "Programming with Python", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT208", name: "Product Realization", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT209", name: "Environmental Studies", credits: 0, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "COUC201", name: "Coursera: AI Skills", credits: 1, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      3: [
+        { code: "MT301", name: "Management Accounting for Engineers", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT302", name: "Discrete Mathematics", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT303", name: "Data Structures and Algorithms", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT304", name: "Computer Organization and Architecture", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT305", name: "Database Management Systems", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT306", name: "Financial Management", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT307", name: "Object Oriented Programming", credits: 3, type: "standard", category: "COMP" },
+        { code: "COUC301", name: "Coursera: Cloud Computing", credits: 1, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      4: [
+        { code: "MT401", name: "Marketing Management", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT402", name: "Operating Systems", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT403", name: "Computer Networks", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT404", name: "Cost & Management Accounting", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT405", name: "Design Experience I", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT406", name: "Web Technologies", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT407", name: "Business Statistics", credits: 2, type: "standard", category: "COMP" },
+        { code: "COUC401", name: "Coursera: Advanced Engineering Elective", credits: 2, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      5: [
+        { code: "MT501", name: "Operations Management", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT502", name: "Software Engineering", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT503", name: "Design and Analysis of Algorithms", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT504", name: "Machine Learning Techniques", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT505", name: "Program Elective - I", credits: 3, type: "standard", category: "ELEC" },
+        { code: "MT506", name: "Design Experience II", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "COUC501", name: "Coursera: Emerging Technologies", credits: 1, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      6: [
+        { code: "MT601", name: "Corporate Finance", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT602", name: "Cloud Computing & DevOps", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT603", name: "Program Elective - II", credits: 3, type: "standard", category: "ELEC" },
+        { code: "MT604", name: "Program Elective - III", credits: 3, type: "standard", category: "ELEC" },
+        { code: "MT605", name: "Design Experience III", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT606", name: "Technical Seminar", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "COUC601", name: "Coursera: AI in Business", credits: 2, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      7: [
+        { code: "MT701", name: "Business Law & Ethics", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT702", name: "Artificial Intelligence & Deep Learning", credits: 4, type: "standard", category: "COMP" },
+        { code: "MT703", name: "Information & Cyber Security", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT704", name: "Program Elective - IV", credits: 3, type: "standard", category: "ELEC" },
+        { code: "MT705", name: "Supply Chain Management", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT706", name: "B.Tech Major Project I", credits: 3, type: "ica_only", category: "COMP" },
+        { code: "COUC701", name: "Coursera: Applied Data Science", credits: 2, type: "ica_only", category: "COUC", remark: "Only ICA" },
+      ],
+      8: [
+        { code: "MT801", name: "Consumer Behaviour", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT802", name: "Digital Marketing & Analytics", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT803", name: "B2B Marketing", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT804", name: "Organizational Behaviour", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT805", name: "Business Research Methods", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT806", name: "Entrepreneurship", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "MT807", name: "B.Tech Major Project II", credits: 5, type: "ica_only", category: "COMP" },
+      ],
+      9: [
+        { code: "MT901", name: "Management of Technology and Innovation", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT902", name: "Human Resource Management", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT903", name: "Management Elective - I", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT904", name: "Management Elective - II", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT905", name: "Management Elective - III", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT906", name: "Management Elective - IV", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT907", name: "Management Internship Program", credits: 12, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+      10: [
+        { code: "MT1001", name: "Strategic Management", credits: 3, type: "standard", category: "COMP" },
+        { code: "MT1002", name: "Sustainable Business Management Practices", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT1003", name: "Contract, Competition and Consumer Laws", credits: 2, type: "standard", category: "COMP" },
+        { code: "MT1004", name: "Management Elective - V", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT1005", name: "Management Elective - VI", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT1006", name: "Management Elective - VII", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT1007", name: "Management Elective - VIII", credits: 2, type: "standard", category: "ELEC" },
+        { code: "MT1008", name: "Capstone Project", credits: 5, type: "standard", category: "COMP" },
+      ],
+    },
+  },
+};
+
+// ==========================================
+// DIPLOMA IN ENGINEERING DATABASE (SEMESTERS 1 TO 6)
+// ==========================================
+export const DIPLOMA_DATABASE: BatchCurriculum = {
+  "2026": {
+    it: {
+      1: [
+        { code: "DIP101", name: "Applied Mathematics - I", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP102", name: "Applied Physics", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP103", name: "Applied Chemistry", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP104", name: "Basic Electrical & Electronics Engineering", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP105", name: "Communication Skills", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "DIP106", name: "Engineering Workshop Practice", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "DIP107", name: "Computer Applications Lab", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+      2: [
+        { code: "DIP201", name: "Applied Mathematics - II", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP202", name: "Programming in C", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP203", name: "Digital Electronics", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP204", name: "Web Page Designing", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP205", name: "Professional Ethics", credits: 1, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "DIP206", name: "Environmental Studies", credits: 0, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+      3: [
+        { code: "DIP301", name: "Applied Mathematics - III", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP302", name: "Data Structures", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP303", name: "Digital Techniques", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP304", name: "Database Management Systems", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP305", name: "Computer Graphics", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP306", name: "Object Oriented Programming with C++", credits: 3, type: "standard", category: "COMP" },
+      ],
+      4: [
+        { code: "DIP401", name: "Java Programming", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP402", name: "Operating Systems", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP403", name: "Computer Hardware & Networking", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP404", name: "Microprocessors", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP405", name: "Software Engineering", credits: 3, type: "standard", category: "COMP" },
+        { code: "DIP406", name: "Professional Practices", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+      5: [
+        { code: "DIP501", name: "Advanced Java Programming", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP502", name: "Mobile Application Development", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP503", name: "Information Security", credits: 4, type: "standard", category: "COMP" },
+        { code: "DIP504", name: "Program Elective - I", credits: 3, type: "standard", category: "ELEC" },
+        { code: "DIP505", name: "Entrepreneurship Development", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+        { code: "DIP506", name: "Capstone Project Planning", credits: 2, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+      6: [
+        { code: "DIP601", name: "In-Plant Industrial Training / Internship", credits: 20, type: "ica_only", category: "COMP", remark: "Only ICA" },
+      ],
+    },
+  },
+};
+
+// Safe retrieval helper with intelligent program & branch fallback
+export function getCurriculum(
+  batchId: string,
+  branchId: string,
+  semester: number,
+  programId: ProgramType = "btech"
+): SRBSubject[] {
+  if (programId === "mbatech") {
+    const batchData = MBA_TECH_DATABASE[batchId] || MBA_TECH_DATABASE["2026"];
+    const branchData = batchData[branchId] || batchData["it"] || batchData["ce"];
+    const semCourses = branchData?.[semester];
+    if (semCourses && semCourses.length > 0) return semCourses;
+    const fallbackBatch = MBA_TECH_DATABASE[batchId]?.["it"] || MBA_TECH_DATABASE["2026"]["it"];
+    if (fallbackBatch?.[semester] && fallbackBatch[semester].length > 0) return fallbackBatch[semester];
+    // If lower semester not in MBA Tech IT, fallback to B.Tech branch
+    const btechBatch = SRB_DATABASE[batchId] || SRB_DATABASE["2026"];
+    return btechBatch?.[branchId]?.[semester] || btechBatch?.["ce"]?.[semester] || [];
+  }
+
+  if (programId === "diploma") {
+    const batchData = DIPLOMA_DATABASE[batchId] || DIPLOMA_DATABASE["2026"];
+    const branchData = batchData[branchId] || batchData["it"] || batchData["ce"];
+    const semCourses = branchData?.[semester];
+    if (semCourses && semCourses.length > 0) return semCourses;
+    const fallbackBatch = DIPLOMA_DATABASE[batchId]?.["it"] || DIPLOMA_DATABASE["2026"]["it"];
+    return fallbackBatch?.[semester] || [];
+  }
+
+  // B.Tech
   const batchData = SRB_DATABASE[batchId] || SRB_DATABASE["2026"];
   const branchData = batchData[branchId] || batchData["ce"] || batchData["it"];
   const semCourses = branchData?.[semester];
