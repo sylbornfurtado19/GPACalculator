@@ -7,184 +7,145 @@ import {
   Layers,
   Sparkles,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { GradeBadge } from "@/components/ui/badge";
 import { GRADE_TIERS } from "@/lib/grading";
 
 export default function HowItWorksPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2.5">
-          <BookOpen className="w-6 h-6 text-[var(--primary)]" />
-          NMIMS Academic Grading & Evaluation Rules
+        <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-primary flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          NMIMS Academic Grading &amp; Evaluation Rules
         </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-1">
-          A transparent reference on how internal assessments, term-end examinations, and SGPA are computed.
+        <p className="text-xs text-secondary mt-1">
+          Official reference on how internal assessments, term-end examinations, and weighted SGPA are computed.
         </p>
       </div>
 
       {/* 1. Official Grading Scale */}
-      <Card className="border-[var(--border-color)]">
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Award className="w-4 h-4 text-[var(--primary)]" />
+          <CardTitle className="flex items-center gap-2">
+            <Award className="w-4 h-4 text-cyan-500" />
             1. Official 10-Point Letter Grading Scale
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-            Grades are evaluated using unrounded aggregate percentages. Passing required minimums must be met first.
+          <p className="text-xs text-secondary leading-relaxed">
+            Grades are evaluated using strict unrounded aggregate percentages. Passing required minimums (ICA ≥ 20/50, SEE ≥ 40/100) must be satisfied first.
           </p>
 
-          <div className="overflow-x-auto rounded-xl border border-[var(--border-color)]">
+          <div className="overflow-x-auto rounded-xl border border-border-subtle bg-surface-elevated/40">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">
+                <tr className="border-b border-border-subtle bg-surface-elevated text-secondary font-bold uppercase tracking-wider text-[10px]">
                   <th className="p-3">Percentage Range</th>
                   <th className="p-3 text-center">Letter Grade</th>
                   <th className="p-3 text-center">Grade Points</th>
-                  <th className="p-3">Qualitative Performance</th>
+                  <th className="p-3">Qualitative Band</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border-subtle)]">
+              <tbody className="divide-y divide-border-subtle font-mono">
                 {GRADE_TIERS.map((tier) => (
-                  <tr key={tier.grade} className="hover:bg-[var(--bg-surface)]/50">
-                    <td className="p-3 font-mono font-medium">
+                  <tr key={tier.grade} className="hover:bg-surface-elevated/60 transition-colors">
+                    <td className="p-3 font-semibold text-primary">
                       {tier.min}% to {tier.max === 100 ? "100%" : `< ${tier.max}%`}
                     </td>
-                    <td className="p-3 text-center font-mono font-bold text-[var(--primary)]">
-                      {tier.grade}
+                    <td className="p-3 text-center">
+                      <GradeBadge grade={tier.grade} size="sm" />
                     </td>
-                    <td className="p-3 text-center font-mono font-semibold text-[var(--text-primary)]">
+                    <td className="p-3 text-center font-bold text-primary tabular-nums">
                       {tier.points}
                     </td>
-                    <td className="p-3 text-[var(--text-secondary)]">{tier.label}</td>
+                    <td className="p-3 font-sans text-secondary text-xs">
+                      {tier.label}
+                    </td>
                   </tr>
                 ))}
-                <tr className="hover:bg-[var(--bg-surface)]/50 bg-[var(--danger-bg)]/20">
-                  <td className="p-3 font-mono font-medium">Absent (Any required component)</td>
-                  <td className="p-3 text-center font-mono font-bold text-[var(--danger)]">AB</td>
-                  <td className="p-3 text-center font-mono font-semibold text-[var(--danger)]">0</td>
-                  <td className="p-3 text-[var(--danger)]">Absent / Incomplete</td>
-                </tr>
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* 2. Course Evaluation Formulas & Passing Thresholds */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Standard Course */}
-        <Card className="border-[var(--border-color)]">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />
-              Standard Course (ICA + SEE/TEE)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-[var(--text-secondary)] leading-relaxed">
-            <p>
-              Standard courses comprise Continuous Assessment (ICA) and a Term-End Examination (SEE / TEE).
-            </p>
-            <div className="p-3 rounded-lg bg-[var(--bg-surface)] font-mono text-[11px] text-[var(--text-primary)] border border-[var(--border-subtle)]">
-              Final Marks (out of 100) = ICA + (SEE / 2)
-            </div>
-            <div className="space-y-1 pt-1 text-[11px]">
-              <div className="font-semibold text-[var(--text-primary)]">Mandatory Passing Criteria:</div>
-              <ul className="list-disc list-inside space-y-0.5 text-[var(--text-secondary)]">
-                <li>Minimum ICA marks: <strong>20 / 50 (40%)</strong></li>
-                <li>Minimum SEE / TEE marks: <strong>40 / 100 (40%)</strong></li>
-                <li>Minimum aggregate marks: <strong>40%</strong></li>
-              </ul>
-            </div>
-            <div className="p-2 rounded-lg bg-[var(--warning-bg)]/40 border border-[var(--warning)]/20 text-[11px] text-[var(--warning)]">
-              <strong>Crucial Rule:</strong> Scoring a high aggregate will NOT override failing either the ICA or SEE individual passing thresholds. Both must be satisfied.
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ICA-Only Course */}
-        <Card className="border-[var(--border-color)]">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              ICA-Only Course (Labs & Workshops)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs text-[var(--text-secondary)] leading-relaxed">
-            <p>
-              Certain practical courses, laboratories, and workshops are evaluated strictly on internal continuous assessment.
-            </p>
-            <div className="p-3 rounded-lg bg-[var(--bg-surface)] font-mono text-[11px] text-[var(--text-primary)] border border-[var(--border-subtle)]">
-              Final Percentage = ICA Marks × 2
-            </div>
-            <div className="space-y-1 pt-1 text-[11px]">
-              <div className="font-semibold text-[var(--text-primary)]">Mandatory Passing Criteria:</div>
-              <ul className="list-disc list-inside space-y-0.5 text-[var(--text-secondary)]">
-                <li>Minimum ICA marks: <strong>20 / 50 (40%)</strong></li>
-                <li>Term-End (SEE/TEE) passing criteria does NOT apply.</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 3. Credit-Weighted SGPA Formula */}
-      <Card className="border-[var(--border-color)]">
+      {/* 2. Course Evaluation Types */}
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[var(--primary)]" />
-            3. Credit-Weighted Semester Grade Point Average (SGPA)
+          <CardTitle className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-indigo-500 dark:text-cyan-400" />
+            2. Course Evaluation Schemes (Standard vs Only ICA)
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-xs text-[var(--text-secondary)] leading-relaxed">
-          <p>
-            SGPA is computed by multiplying the grade points earned in each subject by that course&apos;s credit value, summing the products across all courses, and dividing by the total registered credits.
-          </p>
+        <CardContent className="space-y-4 text-xs text-secondary leading-relaxed">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-border-subtle bg-surface-elevated/40 space-y-2">
+              <h4 className="font-bold text-sm text-primary flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-cyan-500" />
+                Standard Courses (ICA + SEE)
+              </h4>
+              <p>
+                Continuous Internal Assessment (ICA) carries <strong>50 marks</strong> (scaled to 50%), and Semester End Examination (SEE) carries <strong>100 marks</strong> (scaled to 50%).
+              </p>
+              <div className="p-2.5 rounded-lg bg-surface border border-border-subtle font-mono text-[11px] text-primary">
+                Final % = (ICA / 50 × 50) + (SEE / 100 × 50) = ICA + (SEE / 2)
+              </div>
+              <p className="text-[11px] text-muted">
+                Mandatory minimums: ICA ≥ 20/50 (40%) and SEE ≥ 40/100 (40%).
+              </p>
+            </div>
 
-          <div className="p-4 rounded-xl bg-[var(--bg-surface)] text-center font-mono text-sm font-bold text-[var(--text-primary)] border border-[var(--border-subtle)]">
-            SGPA = Σ (Grade Points × Credits) ÷ Σ (Credits)
+            <div className="p-4 rounded-xl border border-border-subtle bg-surface-elevated/40 space-y-2">
+              <h4 className="font-bold text-sm text-primary flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-indigo-500 dark:text-cyan-400" />
+                ICA-Only Courses (Practical / Lab)
+              </h4>
+              <p>
+                Evaluated purely on continuous laboratory assignments, vivas, and term-work out of <strong>50 marks</strong>.
+              </p>
+              <div className="p-2.5 rounded-lg bg-surface border border-border-subtle font-mono text-[11px] text-primary">
+                Final % = (ICA / 50) × 100 = ICA × 2
+              </div>
+              <p className="text-[11px] text-muted">
+                Mandatory minimum: ICA ≥ 20/50 (40%). No term-end exam.
+              </p>
+            </div>
           </div>
-
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Note: Simple arithmetic averages do not accurately represent SGPA because higher-credit subjects exert greater mathematical weight.
-          </p>
         </CardContent>
       </Card>
 
-      {/* 4. Target Optimizer Philosophy */}
-      <Card className="border-[var(--border-color)]">
+      {/* 3. SGPA Calculation Formula */}
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            4. How the Target Optimizer Works
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            3. Credit-Weighted SGPA Formula
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 text-xs text-[var(--text-secondary)] leading-relaxed">
+        <CardContent className="space-y-4 text-xs text-secondary leading-relaxed">
           <p>
-            Unlike naive linear target tools, our reverse calculator utilizes discrete integer optimization:
+            Semester Grade Point Average (SGPA) is computed as the credit-weighted average of grade points across all registered courses:
           </p>
-          <ul className="list-disc list-inside space-y-1 text-[var(--text-secondary)]">
-            <li>
-              <strong>Discrete Grade Bands:</strong> Increasing marks within the same band (e.g., from 72% to 78%) remains grade <strong>A (8 pts)</strong> and produces zero SGPA gain. Effort is only recommended when it successfully crosses into a higher grade tier.
-            </li>
-            <li>
-              <strong>Respects Fixed Marks:</strong> Marks you lock (such as completed mid-terms or published internals) are strictly preserved.
-            </li>
-            <li>
-              <strong>Credit Leverage:</strong> Prioritizes subjects with higher credit values where grade jumps yield the greatest multiplier on your final SGPA.
-            </li>
-          </ul>
 
-          <div className="pt-2">
-            <Link href="/planner">
-              <Button size="sm">
-                Try the Target Planner
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+          <div className="p-4 rounded-xl bg-surface border border-border-subtle text-center font-mono text-sm text-primary font-bold">
+            SGPA = Σ ( Grade Points × Course Credits ) / Σ ( Course Credits )
+          </div>
+
+          <p className="text-[11px] text-muted">
+            If any registered subject has a failing grade (F) or absent status (AB), grade points awarded are 0 for that subject, severely pulling down aggregate SGPA.
+          </p>
+
+          <div className="pt-2 flex justify-end">
+            <Link href="/calculator">
+              <Button size="sm" variant="glow">
+                Try Live Calculator <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </Link>
           </div>

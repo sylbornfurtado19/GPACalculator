@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AcademicProvider } from "@/context/academic-context";
 import { Navbar } from "./navbar";
 import { Footer } from "./footer";
+import { CommandPalette } from "@/components/ui/command-palette";
+import { ToastContainer } from "@/components/ui/toast";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,6 +19,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen flex flex-col bg-canvas text-primary relative selection:bg-cyan-500/20 selection:text-cyan-400">
           {/* Ambient Mesh Glow Backdrop */}
           <div className="mesh-ambient-bg" aria-hidden="true" />
+
+          {/* Global Cmd+K Command Palette and Toast Container */}
+          <CommandPalette />
+          <ToastContainer />
 
           {isHome ? (
             children

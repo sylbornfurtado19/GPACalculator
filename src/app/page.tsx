@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Course,
   computeSemesterTelemetry,
@@ -26,9 +27,11 @@ import {
   AlertCircle,
   Plus,
   CheckCircle2,
+  Command,
 } from 'lucide-react';
 import { generateAcademicPdf } from '../lib/pdf-export';
 import { BranchSemesterModal } from '../components/branch-semester-modal';
+import { NAV_ITEMS } from '@/components/layout/navbar';
 import {
   BRANCHES,
   PROGRAMS,
@@ -452,17 +455,34 @@ export default function AcademicHudPage() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-4 text-xs text-slate-600 dark:text-neutral-400 font-medium">
-            <button
-              onClick={() => setShowScaleModal(true)}
-              className="hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+          <nav className="hidden md:flex items-center gap-1.5 text-xs text-slate-600 dark:text-neutral-400 font-medium">
+            <Link
+              href="/calculator"
+              className="px-2.5 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-neutral-200 transition-colors"
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Grading Scale</span>
-            </button>
+              Calculator
+            </Link>
+            <Link
+              href="/planner"
+              className="px-2.5 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-neutral-200 transition-colors"
+            >
+              Planner
+            </Link>
+            <Link
+              href="/how-it-works"
+              className="px-2.5 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-neutral-200 transition-colors"
+            >
+              Grading Rules
+            </Link>
+            <Link
+              href="/settings"
+              className="px-2.5 py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-700 dark:text-neutral-200 transition-colors"
+            >
+              Settings
+            </Link>
             <button
               onClick={handleExportPdf}
-              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-neutral-200 border border-indigo-200/80 dark:border-white/[0.08] font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-neutral-200 border border-indigo-200/80 dark:border-white/[0.08] font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ml-1"
             >
               <FileDown className="w-3.5 h-3.5 text-indigo-600 dark:text-cyan-400" />
               <span>Export PDF</span>
@@ -471,6 +491,18 @@ export default function AcademicHudPage() {
 
           {/* Actions Group */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Command Palette Trigger */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('nmims-open-command-palette'))}
+              title="Open Command Palette (Cmd/Ctrl + K)"
+              className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-600 dark:text-neutral-300 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-all cursor-pointer"
+            >
+              <Command className="w-3.5 h-3.5 text-slate-400" />
+              <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-white/[0.08] px-1 py-0.5 rounded border border-slate-200 dark:border-white/[0.08]">
+                ⌘K
+              </span>
+            </button>
             {/* Branch & Semester Selection Trigger Pill */}
             <button
               onClick={() => setShowBranchModal(true)}
@@ -565,7 +597,7 @@ export default function AcademicHudPage() {
       )}
 
       {/* Main Viewport */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 py-4 sm:py-6 pb-24 md:pb-8 flex flex-col gap-4 sm:gap-6">
         {/* Toast Alert Notification */}
         {copyToast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-[#161922] dark:border dark:border-cyan-500/40 text-xs font-medium shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2">
@@ -811,6 +843,38 @@ export default function AcademicHudPage() {
         onClose={() => setShowBranchModal(false)}
         onSelect={handleBatchBranchSemesterSelect}
       />
+
+      {/* Mobile Bottom Navigation Tab Bar (Permanent, 44px+ touch targets, safe-area padded) */}
+      <nav
+        aria-label="Mobile Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-border-subtle pb-safe backdrop-blur-2xl shadow-2xl"
+      >
+        <div className="grid grid-cols-5 h-14 items-center">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.href === '/';
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex flex-col items-center justify-center h-full min-h-[44px] transition-all duration-150 ${
+                  isActive
+                    ? 'text-indigo-600 dark:text-cyan-400 font-bold'
+                    : 'text-muted hover:text-secondary'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''}`} />
+                <span className="text-[10px] mt-0.5 leading-none">
+                  {item.shortLabel}
+                </span>
+                {isActive && (
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-600 dark:bg-cyan-400 shadow-sm" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

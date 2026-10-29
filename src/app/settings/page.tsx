@@ -11,6 +11,7 @@ import {
   Check,
   AlertCircle,
   FileJson,
+  ArrowRight,
 } from "lucide-react";
 import { useAcademic } from "@/context/academic-context";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -41,10 +42,10 @@ export default function SettingsPage() {
 
   if (!isHydrated) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
-        <p className="text-xs text-[var(--text-secondary)] font-medium">
-          Loading settings...
+      <div className="py-24 flex flex-col items-center justify-center space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
+        <p className="text-xs text-secondary font-medium">
+          Loading workspace settings...
         </p>
       </div>
     );
@@ -63,6 +64,15 @@ export default function SettingsPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    window.dispatchEvent(
+      new CustomEvent("nmims-toast", {
+        detail: {
+          title: "Backup Exported",
+          message: "Saved your personal academic configuration file",
+          type: "success",
+        },
+      })
+    );
   };
 
   // Handle Import File
@@ -95,6 +105,16 @@ export default function SettingsPage() {
         type: "success",
         text: `Successfully imported ${validation.data.subjects.length} subjects for ${validation.data.semesterLabel}!`,
       });
+
+      window.dispatchEvent(
+        new CustomEvent("nmims-toast", {
+          detail: {
+            title: "Backup Restored",
+            message: `Loaded ${validation.data.subjects.length} courses from backup`,
+            type: "success",
+          },
+        })
+      );
     };
 
     reader.readAsText(file);
@@ -104,24 +124,26 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2.5">
-          <Settings className="w-6 h-6 text-[var(--primary)]" />
-          Workspace Settings & Data Management
+        <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-primary flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+            <Settings className="w-5 h-5" />
+          </div>
+          Settings &amp; Data Management
         </h1>
-        <p className="text-xs text-[var(--text-secondary)] mt-1">
-          Manage your academic session labels, browser persistence, and JSON backup files.
+        <p className="text-xs text-secondary mt-1">
+          Manage local browser cache, term labels, and JSON state import/export.
         </p>
       </div>
 
       {/* General Configuration */}
-      <Card className="border-[var(--border-color)]">
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Semester Configuration</CardTitle>
           <CardDescription>
-            Customize your active academic term title and baseline target SGPA.
+            Customize your active academic term title and default baseline target SGPA.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -137,7 +159,7 @@ export default function SettingsPage() {
               type="number"
               min="0"
               max="10"
-              step="0.1"
+              step="0.05"
               value={targetSgpa}
               onChange={(e) => setTargetSgpa(Number(e.target.value))}
             />
@@ -146,14 +168,14 @@ export default function SettingsPage() {
       </Card>
 
       {/* Presets Loader */}
-      <Card className="border-[var(--border-color)]">
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Sparkles className="w-4 h-4 text-cyan-500" />
             Curriculum Presets
           </CardTitle>
           <CardDescription>
-            Quickly load structured sample courses based on NMIMS degree programs.
+            Quickly populate course templates based on official NMIMS degree programs.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -161,31 +183,41 @@ export default function SettingsPage() {
             {CURRICULUM_PRESETS.map((preset) => (
               <div
                 key={preset.id}
-                className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-col justify-between space-y-3"
+                className="p-4 rounded-xl border border-border-subtle bg-surface-elevated/40 hover:bg-surface-elevated flex flex-col justify-between space-y-3 transition-colors"
               >
                 <div>
-                  <div className="font-semibold text-xs text-[var(--text-primary)]">
+                  <div className="font-semibold text-xs text-primary">
                     {preset.name}
                   </div>
-                  <div className="text-[11px] text-[var(--primary)] font-medium">
+                  <div className="text-[11px] text-indigo-500 dark:text-cyan-400 font-bold">
                     {preset.program}
                   </div>
-                  <div className="text-[11px] text-[var(--text-secondary)] mt-1">
+                  <div className="text-[11px] text-secondary mt-1 leading-relaxed">
                     {preset.description}
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between border-t border-[var(--border-subtle)]">
-                  <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                    {preset.subjects.length} Subjects • Target {preset.targetSgpa.toFixed(1)}
+                <div className="pt-2 flex items-center justify-between border-t border-border-subtle">
+                  <span className="text-[10px] text-muted font-mono">
+                    {preset.subjects.length} Subjects · Target {preset.targetSgpa.toFixed(1)}
                   </span>
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => loadPreset(preset.id)}
-                    className="text-xs"
+                    size="xs"
+                    onClick={() => {
+                      loadPreset(preset.id);
+                      window.dispatchEvent(
+                        new CustomEvent("nmims-toast", {
+                          detail: {
+                            title: "Preset Loaded",
+                            message: `Loaded ${preset.name}`,
+                            type: "success",
+                          },
+                        })
+                      );
+                    }}
                   >
-                    Load Preset
+                    Load Preset <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
               </div>
@@ -195,20 +227,20 @@ export default function SettingsPage() {
       </Card>
 
       {/* Import / Export Backup */}
-      <Card className="border-[var(--border-color)]">
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <FileJson className="w-4 h-4 text-[var(--primary)]" />
-            Import & Export Backup (JSON)
+            <FileJson className="w-4 h-4 text-indigo-500 dark:text-cyan-400" />
+            Import &amp; Export Backup (JSON)
           </CardTitle>
           <CardDescription>
-            Download your academic marks to take with you or restore from a previously exported JSON backup.
+            Download your academic grades to take with you or restore from a previously exported backup file.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <Button variant="secondary" size="md" onClick={handleExport} className="w-full sm:w-auto">
-              <Download className="w-4 h-4 mr-1.5" />
+              <Download className="w-4 h-4 mr-1.5 text-cyan-500" />
               Export Academic Data (.json)
             </Button>
 
@@ -233,10 +265,10 @@ export default function SettingsPage() {
 
           {importMessage && (
             <div
-              className={`p-3 rounded-lg border text-xs flex items-center gap-2 ${
+              className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
                 importMessage.type === "success"
-                  ? "border-[var(--success)]/30 bg-[var(--success-bg)] text-[var(--success)]"
-                  : "border-[var(--danger)]/30 bg-[var(--danger-bg)] text-[var(--danger)]"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
               }`}
             >
               {importMessage.type === "success" ? (
@@ -251,25 +283,25 @@ export default function SettingsPage() {
       </Card>
 
       {/* Privacy Guarantee & Reset Area */}
-      <Card className="border-[var(--border-color)]">
+      <Card className="glass-panel rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[var(--success)]" />
-            Privacy & Local Storage
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            Privacy &amp; Local Persistence
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 text-xs text-[var(--text-secondary)] leading-relaxed">
+        <CardContent className="space-y-4 text-xs text-secondary leading-relaxed">
           <p>
-            Your academic records are stored strictly in your browser&apos;s local storage. GPA Calculator never transmits your scores, subject names, or estimates to any remote server or cloud database.
+            Your academic records are stored strictly in your browser&apos;s local storage. This application runs 100% client-side and never transmits your grades, names, or target settings to any remote server or third-party service.
           </p>
 
-          <div className="pt-4 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="pt-4 border-t border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <div className="font-semibold text-[var(--text-primary)]">
+              <div className="font-bold text-primary">
                 Reset All Academic Data
               </div>
-              <div className="text-[11px] text-[var(--text-muted)]">
-                Permanently clears all stored subjects and restores an empty workspace.
+              <div className="text-[11px] text-muted">
+                Permanently clears all stored courses and restores a fresh empty state.
               </div>
             </div>
 
@@ -294,10 +326,10 @@ export default function SettingsPage() {
         maxWidth="sm"
       >
         <div className="space-y-4 pt-2">
-          <p className="text-xs text-[var(--text-secondary)]">
+          <p className="text-xs text-secondary">
             You currently have <strong>{subjects.length} subject(s)</strong> configured. You can always use the &quot;Undo&quot; button immediately after if you make a mistake.
           </p>
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle">
             <Button
               variant="outline"
               size="sm"
@@ -311,6 +343,15 @@ export default function SettingsPage() {
               onClick={() => {
                 resetAll();
                 setIsResetModalOpen(false);
+                window.dispatchEvent(
+                  new CustomEvent("nmims-toast", {
+                    detail: {
+                      title: "Workspace Reset",
+                      message: "All courses and preferences cleared",
+                      type: "warning",
+                    },
+                  })
+                );
               }}
             >
               Yes, Reset Everything
