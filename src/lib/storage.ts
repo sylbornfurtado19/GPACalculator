@@ -1,6 +1,6 @@
 import { AcademicStoreState, Subject } from "@/types/academic";
 
-const STORAGE_KEY = "nmims_gpa_calculator_v1";
+const STORAGE_KEY = "nmims_gpa_calculator_v2";
 const HUD_STORAGE_KEY = "nmims_user_courses";
 
 export const DEFAULT_INITIAL_STATE: AcademicStoreState = {

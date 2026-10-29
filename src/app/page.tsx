@@ -22,8 +22,12 @@ import {
   FileDown,
   X,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import { generateAcademicPdf } from '../lib/pdf-export';
+import { BranchSemesterModal, BRANCHES } from '../components/branch-semester-modal';
+
+const APP_RELEASE_VERSION = 'v2_branch_curriculum_release';
 
 export default function AcademicHudPage() {
   // Theme state: defaults to off-white 'light'
@@ -38,6 +42,18 @@ export default function AcademicHudPage() {
   // Active courses state - strictly user's own data saved locally on laptop
   const [courses, setCourses] = useState<Course[]>(() => {
     if (typeof window !== 'undefined') {
+      // Version check: if app updated, wipe legacy user preferences & courses
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) {
+        localStorage.removeItem('nmims_user_courses');
+        localStorage.removeItem('nmims_hud_courses');
+        localStorage.removeItem('nmims_user_branch');
+        localStorage.removeItem('nmims_user_semester');
+        localStorage.removeItem('nmims_gpa_calculator_v1');
+        localStorage.setItem('nmims_app_version', APP_RELEASE_VERSION);
+        return [];
+      }
+
       // 1. Immediately purge legacy demo storage keys
       localStorage.removeItem('nmims_hud_courses');
 
@@ -47,19 +63,7 @@ export default function AcademicHudPage() {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            // Filter out any unwanted old demo subjects (e.g. CS401 Algorithms, CS402, etc.)
-            const authentic = parsed.filter(
-              (c) =>
-                !(
-                  (c.code === 'CS401' && c.name?.includes('Algorithms')) ||
-                  (c.code === 'CS402' && c.name?.includes('Architecture')) ||
-                  (c.code === 'MA401' && c.name?.includes('Linear Algebra')) ||
-                  (c.code === 'CS403' && c.name?.includes('Database')) ||
-                  (c.code === 'CS404L' && c.name?.includes('Systems Lab')) ||
-                  (c.code === 'HM401' && c.name?.includes('Ethics'))
-                )
-            );
-            return authentic;
+            return parsed;
           }
         } catch (e) {
           console.error('Failed to parse saved courses', e);
@@ -90,6 +94,74 @@ export default function AcademicHudPage() {
   // Modal / Drawer states
   const [showScaleModal, setShowScaleModal] = useState<boolean>(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
+
+  // Branch & Semester state
+  const [branch, setBranch] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) return '';
+      return localStorage.getItem('nmims_user_branch') || '';
+    }
+    return '';
+  });
+
+  const [semester, setSemester] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) return 1;
+      const saved = localStorage.getItem('nmims_user_semester');
+      if (saved) {
+        const val = parseInt(saved, 10);
+        if (!isNaN(val)) return val;
+      }
+    }
+    return 1;
+  });
+
+  // Modal opens automatically on launch if no branch is chosen yet
+  const [showBranchModal, setShowBranchModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) {
+        // App update: reset all preferences
+        localStorage.removeItem('nmims_user_courses');
+        localStorage.removeItem('nmims_hud_courses');
+        localStorage.removeItem('nmims_user_branch');
+        localStorage.removeItem('nmims_user_semester');
+        localStorage.removeItem('nmims_gpa_calculator_v1');
+        localStorage.setItem('nmims_app_version', APP_RELEASE_VERSION);
+
+        setCourses([]);
+        setBranch('');
+        setSemester(1);
+        setShowBranchModal(true);
+      } else {
+        const savedBranch = localStorage.getItem('nmims_user_branch');
+        if (!savedBranch) {
+          setShowBranchModal(true);
+        }
+      }
+    }
+  }, []);
+
+  const currentBranchObj = useMemo(
+    () => BRANCHES.find((b) => b.id === branch),
+    [branch]
+  );
+
+  const handleBranchSemesterSelect = (selectedBranch: string, selectedSemester: number) => {
+    setBranch(selectedBranch);
+    setSemester(selectedSemester);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nmims_user_branch', selectedBranch);
+      localStorage.setItem('nmims_user_semester', selectedSemester.toString());
+    }
+    setShowBranchModal(false);
+    const branchName = BRANCHES.find((b) => b.id === selectedBranch)?.code || selectedBranch.toUpperCase();
+    showToast(`Selected ${branchName} · Semester ${selectedSemester}`);
+  };
 
   // Sync theme to document and persist locally
   useEffect(() => {
@@ -248,15 +320,22 @@ export default function AcademicHudPage() {
   // Reset confirmation dialog state
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Reset to clean empty state (wipes stored data)
+  // Reset to clean empty state (wipes stored data & preferences)
   const handleReset = () => {
     setCourses([]);
+    setBranch('');
+    setSemester(1);
     setActiveScenario('none');
     setIsGhostModeActive(false);
     setShowResetConfirm(false);
     localStorage.removeItem('nmims_user_courses');
     localStorage.removeItem('nmims_hud_courses');
-    showToast('Cleared all subjects. Clean slate ready!');
+    localStorage.removeItem('nmims_user_branch');
+    localStorage.removeItem('nmims_user_semester');
+    localStorage.removeItem('nmims_gpa_calculator_v1');
+    localStorage.removeItem('nmims_gpa_calculator_v2');
+    setShowBranchModal(true);
+    showToast('Reset all preferences & subjects. Please select your branch & semester!');
   };
 
   const unlockedCount = courses.filter((c) => !c.isLocked).length;
@@ -302,6 +381,19 @@ export default function AcademicHudPage() {
 
           {/* Actions Group */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Branch & Semester Selection Trigger Pill */}
+            <button
+              onClick={() => setShowBranchModal(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-cyan-400 border border-indigo-200/80 dark:border-white/[0.08] text-xs font-semibold transition-all cursor-pointer"
+              title="Change Branch & Semester"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>
+                {currentBranchObj ? currentBranchObj.code : (branch ? branch.toUpperCase() : 'Select Branch')}
+                {branch ? ` · Sem ${semester}` : ''}
+              </span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
             <button
               onClick={() => setShowScaleModal(true)}
               className="md:hidden p-2 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-neutral-300 transition-all cursor-pointer"
@@ -387,6 +479,29 @@ export default function AcademicHudPage() {
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-[#161922] dark:border dark:border-cyan-500/40 text-xs font-medium shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2">
             <Check className="w-4 h-4 text-emerald-400 dark:text-cyan-400" />
             <span>{copyToast}</span>
+          </div>
+        )}
+
+        {/* Active Academic Program Banner */}
+        {branch && (
+          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-slate-600 dark:text-neutral-400">Curriculum:</span>
+              <span className="font-bold text-slate-900 dark:text-white">
+                {currentBranchObj?.name || branch.toUpperCase()}
+              </span>
+              <span className="text-slate-300 dark:text-neutral-600">·</span>
+              <span className="font-semibold text-indigo-600 dark:text-cyan-400">
+                Semester {semester}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowBranchModal(true)}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-cyan-400 dark:hover:text-cyan-300 cursor-pointer"
+            >
+              Change
+            </button>
           </div>
         )}
 
@@ -510,6 +625,16 @@ export default function AcademicHudPage() {
           </div>
         </div>
       )}
+
+      {/* Branch & Semester Selector Modal */}
+      <BranchSemesterModal
+        isOpen={showBranchModal}
+        currentBranch={branch}
+        currentSemester={semester}
+        isDismissable={Boolean(branch)}
+        onClose={() => setShowBranchModal(false)}
+        onSelect={handleBranchSemesterSelect}
+      />
     </div>
   );
 }
