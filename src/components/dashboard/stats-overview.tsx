@@ -4,15 +4,13 @@ import React from "react";
 import {
   Award,
   Target,
-  TrendingUp,
-  TrendingDown,
   CheckCircle2,
-  BookOpen,
-  Layers,
   AlertTriangle,
+  BookOpen,
+  TrendingUp,
 } from "lucide-react";
 import { SgpaSummary } from "@/types/academic";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { formatGpa } from "@/lib/utils";
 
 interface StatsOverviewProps {
@@ -25,116 +23,109 @@ export function StatsOverview({ summary, targetSgpa }: StatsOverviewProps) {
   const isAhead = diff >= 0;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-      {/* Current Estimated SGPA */}
-      <Card className="col-span-2 md:col-span-1 lg:col-span-2 border-[var(--primary)]/30 bg-[var(--primary-subtle)]/40 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Award className="w-16 h-16 text-[var(--primary)]" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      {/* 1. Target SGPA & Delta Card */}
+      <Card className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            Target Goal
+          </span>
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+            <Target className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <CardContent className="p-4 flex flex-col justify-between h-full">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[var(--primary)] text-white shadow-2xs">
-              <Award className="w-4 h-4" />
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-              Estimated SGPA
-            </span>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold font-mono tracking-tight text-[var(--text-primary)]">
-              {formatGpa(summary.sgpa)}
-            </span>
-            <span className="text-xs text-[var(--text-muted)] font-mono">/ 10.00</span>
-          </div>
-          <div className="mt-2 text-[11px] text-[var(--text-secondary)] flex items-center gap-1.5">
-            {summary.allPassed ? (
-              <span className="text-[var(--success)] font-medium flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> All passing requirements met
-              </span>
-            ) : (
-              <span className="text-[var(--danger)] font-medium flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5" /> {summary.failedSubjects + summary.absentSubjects} subject(s) need attention
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Target SGPA */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-            <Target className="w-4 h-4 text-amber-500" />
-            <span>Target SGPA</span>
-          </div>
-          <div className="mt-3 text-2xl font-bold font-mono text-[var(--text-primary)]">
+        <div className="mt-2">
+          <div className="font-display text-2xl font-bold tracking-tight text-primary tabular-nums">
             {formatGpa(targetSgpa)}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--text-muted)]">
-            Configured target
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Target Gap */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+          <div className="mt-1 flex items-center gap-1 text-[11px] font-semibold">
             {isAhead ? (
-              <TrendingUp className="w-4 h-4 text-[var(--success)]" />
+              <span className="text-emerald-500 flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3" /> +{formatGpa(diff)} ahead
+              </span>
             ) : (
-              <TrendingDown className="w-4 h-4 text-amber-500" />
+              <span className="text-amber-500 flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3 rotate-180" /> {formatGpa(diff)} gap
+              </span>
             )}
-            <span>Target Gap</span>
           </div>
-          <div className="mt-3 flex items-baseline gap-1">
-            <span
-              className={`text-2xl font-bold font-mono ${
-                isAhead ? "text-[var(--success)]" : "text-amber-500"
-              }`}
-            >
-              {isAhead ? "+" : ""}
-              {formatGpa(diff)}
-            </span>
-          </div>
-          <div className="mt-1 text-[11px] text-[var(--text-muted)]">
-            {isAhead ? "Surpassing target" : "Shortfall from target"}
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Total Credits */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-            <Layers className="w-4 h-4 text-[var(--primary)]" />
-            <span>Total Credits</span>
+      {/* 2. Total Enrolled Credits */}
+      <Card className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            Total Credits
+          </span>
+          <div className="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-500 flex items-center justify-center">
+            <BookOpen className="w-3.5 h-3.5" />
           </div>
-          <div className="mt-3 text-2xl font-bold font-mono text-[var(--text-primary)]">
+        </div>
+        <div className="mt-2">
+          <div className="font-display text-2xl font-bold tracking-tight text-primary tabular-nums">
             {summary.totalCredits}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--text-muted)]">
-            {summary.totalGradePoints.toFixed(1)} weighted GP
+          <div className="mt-1 text-[11px] text-secondary font-medium">
+            Across {summary.totalSubjects} enrolled subjects
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Subjects & Pass Rate */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-            <BookOpen className="w-4 h-4 text-indigo-500" />
-            <span>Pass Status</span>
+      {/* 3. Passing Compliance Status */}
+      <Card className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            Passing Status
+          </span>
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+              summary.allPassed
+                ? "bg-emerald-500/10 text-emerald-500"
+                : "bg-rose-500/10 text-rose-500"
+            }`}
+          >
+            {summary.allPassed ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : (
+              <AlertTriangle className="w-3.5 h-3.5" />
+            )}
           </div>
-          <div className="mt-3 text-2xl font-bold font-mono text-[var(--text-primary)]">
-            {summary.passedSubjects} <span className="text-sm font-normal text-[var(--text-muted)]">/ {summary.totalSubjects}</span>
+        </div>
+        <div className="mt-2">
+          <div
+            className={`font-display text-lg font-bold tracking-tight ${
+              summary.allPassed ? "text-emerald-500" : "text-rose-500"
+            }`}
+          >
+            {summary.allPassed ? "100% Passed" : `${summary.failedSubjects + summary.absentSubjects} Attention`}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--text-muted)]">
-            {summary.totalSubjects > 0
-              ? `${Math.round((summary.passedSubjects / summary.totalSubjects) * 100)}% passing`
-              : "No subjects"}
+          <div className="mt-1 text-[11px] text-secondary font-medium">
+            {summary.allPassed
+              ? "All ICA & SEE minimums met"
+              : "Review subjects with < 40%"}
           </div>
-        </CardContent>
+        </div>
+      </Card>
+
+      {/* 4. Weighted Grade Points Total */}
+      <Card className="p-4 sm:p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+            Total Points
+          </span>
+          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <Award className="w-3.5 h-3.5" />
+          </div>
+        </div>
+        <div className="mt-2">
+          <div className="font-display text-2xl font-bold tracking-tight text-primary tabular-nums">
+            {summary.totalGradePoints.toFixed(0)}
+          </div>
+          <div className="mt-1 text-[11px] text-secondary font-medium">
+            Σ(Grade Points × Credits)
+          </div>
+        </div>
       </Card>
     </div>
   );
