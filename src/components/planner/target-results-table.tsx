@@ -7,12 +7,13 @@ import {
   ArrowRight,
   Lock,
   Sparkles,
+  Sliders,
 } from "lucide-react";
 import { OptimizerResult } from "@/types/academic";
-import { GradeBadge, StatusBadge } from "@/components/ui/badge";
+import { GradeBadge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatGpa, formatPercent } from "@/lib/utils";
+import { formatGpa } from "@/lib/utils";
 
 interface TargetResultsTableProps {
   result: OptimizerResult;
@@ -25,21 +26,24 @@ export function TargetResultsTable({
   currentSgpa,
   onApplyPlan,
 }: TargetResultsTableProps) {
+  // Feasibility status
+  const isAchievable = result.achievable;
 
   return (
-    <Card className="border-[var(--border-color)] bg-[var(--bg-card)] shadow-xs">
+    <Card className="glass-panel rounded-2xl select-none space-y-6">
       <CardHeader>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[var(--primary)]" />
-              Optimization Outcome & Recommendation
+              <Sparkles className="w-4 h-4 text-cyan-500" />
+              Optimization Outcome &amp; Mission Checklist
             </CardTitle>
             <CardDescription>{result.message}</CardDescription>
           </div>
 
-          {result.achievable && (
-            <Button onClick={onApplyPlan} size="sm">
+          {isAchievable && (
+            <Button onClick={onApplyPlan} size="sm" variant="glow">
+              <Sliders className="w-3.5 h-3.5 mr-1" />
               Apply Plan to Live Estimator
             </Button>
           )}
@@ -47,37 +51,42 @@ export function TargetResultsTable({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Top Summary Banner */}
+        {/* Feasibility Telemetry Banner */}
         <div
-          className={`p-4 rounded-xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
-            result.achievable
-              ? "border-[var(--success)]/30 bg-[var(--success-bg)]/40 text-[var(--text-primary)]"
-              : "border-[var(--warning)]/30 bg-[var(--warning-bg)]/40 text-[var(--text-primary)]"
+          className={`p-4 sm:p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+            isAchievable
+              ? "border-emerald-500/30 bg-emerald-500/10 text-primary"
+              : "border-rose-500/30 bg-rose-500/10 text-primary"
           }`}
         >
-          <div className="flex items-center gap-3">
-            {result.achievable ? (
-              <div className="p-2 rounded-lg bg-[var(--success)] text-white">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-            ) : (
-              <div className="p-2 rounded-lg bg-[var(--warning)] text-white">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-            )}
+          <div className="flex items-center gap-3.5">
+            <div
+              className={`p-2.5 rounded-xl text-white shadow-md ${
+                isAchievable ? "bg-emerald-500 shadow-emerald-500/20" : "bg-rose-500 shadow-rose-500/20"
+              }`}
+            >
+              {isAchievable ? (
+                <CheckCircle2 className="w-6 h-6" />
+              ) : (
+                <AlertTriangle className="w-6 h-6" />
+              )}
+            </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-                {result.achievable ? "Target Achievable" : "Target Math Limit Reached"}
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                {isAchievable ? "Mission Status: Achievable" : "Target Exceeds Boundary Limit"}
               </div>
-              <div className="text-base font-bold text-[var(--text-primary)]">
-                {result.achievable ? (
+              <div className="font-display text-lg font-bold">
+                {isAchievable ? (
                   <span>
-                    Achieved SGPA: <span className="font-mono text-[var(--primary)]">{formatGpa(result.achievedSgpa)}</span>
+                    Projected SGPA:{" "}
+                    <span className="font-mono text-emerald-500 tabular-nums">
+                      {formatGpa(result.achievedSgpa)}
+                    </span>
                   </span>
                 ) : (
                   <span>
-                    Highest Achievable SGPA:{" "}
-                    <span className="font-mono text-[var(--warning)]">
+                    Max Achievable SGPA:{" "}
+                    <span className="font-mono text-rose-500 tabular-nums">
                       {formatGpa(result.maxPossibleSgpa)}
                     </span>
                   </span>
@@ -88,147 +97,125 @@ export function TargetResultsTable({
 
           <div className="flex items-center gap-6 text-xs">
             <div>
-              <span className="text-[var(--text-muted)] block text-[10px] uppercase font-semibold">
-                Current SGPA
+              <span className="text-muted block text-[10px] uppercase font-bold tracking-wider">
+                Current
               </span>
-              <span className="font-mono font-bold text-sm text-[var(--text-primary)]">
+              <span className="font-mono font-bold text-base text-primary tabular-nums">
                 {formatGpa(currentSgpa)}
               </span>
             </div>
 
-            <ArrowRight className="w-4 h-4 text-[var(--text-muted)]" />
+            <ArrowRight className="w-4 h-4 text-muted" />
 
             <div>
-              <span className="text-[var(--text-muted)] block text-[10px] uppercase font-semibold">
-                Projected SGPA
+              <span className="text-muted block text-[10px] uppercase font-bold tracking-wider">
+                Targeted
               </span>
-              <span className="font-mono font-bold text-sm text-[var(--primary)]">
+              <span className="font-mono font-bold text-base text-indigo-500 dark:text-cyan-400 tabular-nums">
                 {formatGpa(result.achievedSgpa)}
               </span>
             </div>
 
-            <div className="pl-4 border-l border-[var(--border-color)]">
-              <span className="text-[var(--text-muted)] block text-[10px] uppercase font-semibold">
-                Net Extra Marks
+            <div className="pl-4 border-l border-border-subtle">
+              <span className="text-muted block text-[10px] uppercase font-bold tracking-wider">
+                Net Effort
               </span>
-              <span className="font-mono font-bold text-sm text-[var(--text-primary)]">
+              <span className="font-mono font-bold text-base text-primary tabular-nums">
                 +{result.totalAdditionalMarks} marks
               </span>
             </div>
           </div>
         </div>
 
-        {/* Breakdown Table */}
-        <div className="overflow-x-auto rounded-xl border border-[var(--border-color)]">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">
-                <th className="p-3.5">Subject</th>
-                <th className="p-3.5 text-center">Credits</th>
-                <th className="p-3.5">Current Marks</th>
-                <th className="p-3.5">Recommended Marks</th>
-                <th className="p-3.5 text-center">Mark Delta</th>
-                <th className="p-3.5 text-center">Expected Grade</th>
-                <th className="p-3.5 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--border-subtle)]">
-              {result.recommendations.map((rec) => {
-                const isStandard = rec.courseType === "standard";
-                const totalDiff = Math.max(0, rec.icaDiff) + Math.max(0, rec.seeDiff);
+        {/* Stepped Mission Timeline / Checklist */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-bold uppercase tracking-wider text-secondary">
+              Subject Step-by-Step Requirements
+            </span>
+            <span className="text-muted text-[11px]">
+              {result.recommendations.length} Courses evaluated
+            </span>
+          </div>
 
-                return (
-                  <tr
-                    key={rec.subjectId}
-                    className="hover:bg-[var(--bg-surface)]/60 transition-colors"
-                  >
-                    <td className="p-3.5">
-                      <div className="font-semibold text-[var(--text-primary)]">
+          <div className="grid grid-cols-1 gap-2.5">
+            {result.recommendations.map((rec, index) => {
+              const isStandard = rec.courseType === "standard";
+              const totalDiff = Math.max(0, rec.icaDiff) + Math.max(0, rec.seeDiff);
+              const hasDiff = totalDiff > 0;
+
+              return (
+                <div
+                  key={rec.subjectId}
+                  className="p-3.5 rounded-xl border border-border-subtle bg-surface-elevated/40 hover:bg-surface-elevated/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  {/* Subject info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-6 h-6 rounded-lg bg-surface flex items-center justify-center font-mono font-bold text-[11px] text-muted border border-border-subtle shrink-0">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-primary truncate">
                         {rec.subjectName}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)] capitalize">
-                        {isStandard ? "Standard course" : "ICA-only"}
-                      </div>
-                    </td>
-
-                    <td className="p-3.5 text-center font-mono font-semibold text-[var(--primary)]">
-                      {rec.credits}
-                    </td>
-
-                    {/* Current Marks */}
-                    <td className="p-3.5">
-                      <div className="space-y-0.5 font-mono">
-                        <div>
-                          ICA: <strong>{rec.currentIca}</strong>
-                          {rec.isIcaLocked && (
-                            <Lock className="w-3 h-3 inline ml-1 text-[var(--text-muted)]" />
-                          )}
-                        </div>
-                        {isStandard && (
-                          <div>
-                            SEE: <strong>{rec.currentSee}</strong>
-                            {rec.isSeeLocked && (
-                              <Lock className="w-3 h-3 inline ml-1 text-[var(--text-muted)]" />
-                            )}
-                          </div>
+                      <div className="text-[11px] text-secondary flex items-center gap-2">
+                        <span className="text-indigo-500 dark:text-cyan-400 font-bold">
+                          {rec.credits} cr
+                        </span>
+                        <span>·</span>
+                        <span className="capitalize">{isStandard ? "Standard" : "ICA-Only"}</span>
+                        {rec.isIcaLocked && (
+                          <span className="text-amber-500 flex items-center gap-0.5 text-[10px]">
+                            <Lock className="w-3 h-3" /> Locked
+                          </span>
                         )}
                       </div>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Recommended Marks */}
-                    <td className="p-3.5">
-                      <div className="space-y-0.5 font-mono font-bold text-[var(--primary)]">
-                        <div>
+                  {/* Marks Stepped Transition */}
+                  <div className="flex items-center gap-4 self-end sm:self-center">
+                    {/* Current vs Recommended */}
+                    <div className="flex items-center gap-2 font-mono text-xs tabular-nums">
+                      <div className="text-right text-muted">
+                        <div>ICA: {rec.currentIca}</div>
+                        {isStandard && <div>SEE: {rec.currentSee}</div>}
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-muted" />
+                      <div className="text-left font-bold text-primary">
+                        <div className={rec.icaDiff > 0 ? "text-cyan-600 dark:text-cyan-400" : ""}>
                           ICA: {rec.recommendedIca}
-                          {rec.isIcaLocked && (
-                            <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">
-                              (locked)
-                            </span>
-                          )}
                         </div>
                         {isStandard && (
-                          <div>
+                          <div className={rec.seeDiff > 0 ? "text-cyan-600 dark:text-cyan-400" : ""}>
                             SEE: {rec.recommendedSee}
-                            {rec.isSeeLocked && (
-                              <span className="text-[10px] font-normal text-[var(--text-muted)] ml-1">
-                                (locked)
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
-                    </td>
+                    </div>
 
-                    {/* Delta */}
-                    <td className="p-3.5 text-center font-mono">
-                      {totalDiff > 0 ? (
-                        <span className="text-[var(--primary)] font-bold">
+                    {/* Delta Badge */}
+                    <div className="w-24 text-center shrink-0">
+                      {hasDiff ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
                           +{totalDiff} marks
                         </span>
                       ) : (
-                        <span className="text-[var(--text-muted)]">No change</span>
-                      )}
-                    </td>
-
-                    {/* Expected Grade */}
-                    <td className="p-3.5 text-center">
-                      <div className="flex flex-col items-center">
-                        <GradeBadge grade={rec.expectedGrade} size="sm" />
-                        <span className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
-                          {formatPercent(rec.expectedPercentage)} • {rec.expectedGradePoints} pts
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold text-muted bg-surface border border-border-subtle">
+                          No change
                         </span>
-                      </div>
-                    </td>
+                      )}
+                    </div>
 
-                    {/* Status */}
-                    <td className="p-3.5 text-center">
-                      <StatusBadge status={rec.status} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    {/* Target Grade Badge */}
+                    <div className="shrink-0">
+                      <GradeBadge grade={rec.expectedGrade} size="sm" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

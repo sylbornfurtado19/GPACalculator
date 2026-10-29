@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { Target, RotateCcw, BookOpen } from "lucide-react";
+import { RotateCcw, BookOpen, Compass, ArrowRight } from "lucide-react";
 import { useAcademic } from "@/context/academic-context";
 import { TargetForm } from "@/components/planner/target-form";
 import { TargetResultsTable } from "@/components/planner/target-results-table";
@@ -36,17 +36,17 @@ export default function PlannerPage() {
 
   if (!isHydrated) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center space-y-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
-        <p className="text-xs text-[var(--text-secondary)] font-medium">
-          Loading Target Planner...
+      <div className="py-24 flex flex-col items-center justify-center space-y-3">
+        <div className="w-8 h-8 rounded-full border-2 border-cyan-500 border-t-transparent animate-spin" />
+        <p className="text-xs text-secondary font-medium">
+          Loading Mission Planner...
         </p>
       </div>
     );
   }
 
   const handleCompute = () => {
-    // Already dynamically derived with useMemo
+    // Dynamically derived in useMemo
   };
 
   const handleConfirmApply = () => {
@@ -55,32 +55,43 @@ export default function PlannerPage() {
       optimizerResult.recommendations,
       `Applied ${strategy} plan for Target SGPA ${targetSgpa.toFixed(2)}`
     );
+    window.dispatchEvent(
+      new CustomEvent("nmims-toast", {
+        detail: {
+          title: "Target Plan Applied",
+          message: `Updated all unlocked course marks to reach ${optimizerResult.achievedSgpa.toFixed(2)} SGPA`,
+          type: "success",
+        },
+      })
+    );
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] flex items-center gap-2.5">
-            <Target className="w-6 h-6 text-[var(--primary)]" />
-            Target SGPA Planner
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-primary flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <Compass className="w-5 h-5" />
+            </div>
+            Planner &amp; Mission Optimizer
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            Reverse mark calculator based on NMIMS discrete grade bands, credit weightage, and passing thresholds.
+          <p className="text-xs text-secondary mt-1">
+            Deterministic dynamic programming solver for NMIMS discrete grade thresholds and whole-number marks.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {canUndo && (
             <Button variant="outline" size="sm" onClick={undoLastPlan}>
-              <RotateCcw className="w-3.5 h-3.5 mr-1" /> Undo Last Plan
+              <RotateCcw className="w-3.5 h-3.5 mr-1 text-amber-500" /> Undo Last Plan
             </Button>
           )}
 
           <Link href="/calculator">
             <Button variant="secondary" size="sm">
-              Live Calculator
+              Live Calculator <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </Link>
         </div>
@@ -88,20 +99,22 @@ export default function PlannerPage() {
 
       {/* When no subjects are enrolled */}
       {subjects.length === 0 ? (
-        <Card className="border-dashed border-2 border-[var(--border-color)] p-8 text-center">
-          <CardContent className="max-w-md mx-auto space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-[var(--primary-subtle)] text-[var(--primary)] flex items-center justify-center">
-              <BookOpen className="w-6 h-6" />
+        <Card className="border-dashed border-2 border-border-subtle p-8 sm:p-12 text-center glass-panel">
+          <CardContent className="max-w-md mx-auto space-y-4">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center shadow-inner">
+              <BookOpen className="w-7 h-7" />
             </div>
-            <h3 className="text-base font-bold text-[var(--text-primary)]">
-              No Subjects Available to Plan
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)]">
-              Add your subjects in the Dashboard or GPA Calculator first, then return to plan your target marks.
-            </p>
-            <div className="pt-2">
-              <Link href="/">
-                <Button size="sm">Go to Dashboard</Button>
+            <div className="space-y-1">
+              <h3 className="font-display text-lg font-bold text-primary">
+                No Subjects Available to Optimize
+              </h3>
+              <p className="text-xs text-secondary leading-relaxed">
+                Add your curriculum courses in the Live Calculator or Dashboard first, then define your target goal.
+              </p>
+            </div>
+            <div className="pt-2 flex justify-center gap-2">
+              <Link href="/calculator">
+                <Button size="sm">Open GPA Calculator</Button>
               </Link>
             </div>
           </CardContent>
@@ -117,7 +130,7 @@ export default function PlannerPage() {
             onCalculate={handleCompute}
           />
 
-          {/* Results Table */}
+          {/* Stepped Mission Timeline / Checklist Results */}
           {optimizerResult && (
             <TargetResultsTable
               result={optimizerResult}

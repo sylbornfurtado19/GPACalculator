@@ -29,34 +29,34 @@ export function ApplyPlanModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Confirm Applying Target Plan"
-      description="Review mark updates before applying them to your active estimate. You can always undo this action later."
+      title="Apply Target Optimization Plan"
+      description="Update all unlocked subject marks with the computed dynamic programming solution. This action can be reversed with 1-click Undo."
       maxWidth="lg"
     >
       <div className="space-y-4">
         {/* SGPA Change Banner */}
-        <div className="p-3.5 rounded-xl border border-[var(--primary)]/30 bg-[var(--primary-subtle)] flex items-center justify-around text-center">
+        <div className="p-4 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-transparent flex items-center justify-around text-center">
           <div>
-            <div className="text-[11px] text-[var(--text-muted)] font-semibold uppercase">
+            <div className="text-[10px] text-muted font-bold uppercase tracking-wider">
               Current SGPA
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--text-primary)]">
+            <div className="text-xl font-bold font-mono text-primary tabular-nums">
               {formatGpa(currentSgpa)}
             </div>
           </div>
-          <ArrowRight className="w-5 h-5 text-[var(--primary)]" />
+          <ArrowRight className="w-5 h-5 text-cyan-500" />
           <div>
-            <div className="text-[11px] text-[var(--text-muted)] font-semibold uppercase">
+            <div className="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold uppercase tracking-wider">
               Projected SGPA
             </div>
-            <div className="text-xl font-bold font-mono text-[var(--primary)]">
+            <div className="text-xl font-extrabold font-mono text-cyan-600 dark:text-cyan-400 tabular-nums">
               {formatGpa(projectedSgpa)}
             </div>
           </div>
         </div>
 
         {/* Change Preview List */}
-        <div className="max-h-60 overflow-y-auto rounded-lg border border-[var(--border-color)] divide-y divide-[var(--border-subtle)]">
+        <div className="max-h-60 overflow-y-auto no-scrollbar rounded-xl border border-border-subtle bg-surface-elevated/40 divide-y divide-border-subtle">
           {recommendations.map((rec) => {
             const isStandard = rec.courseType === "standard";
             const totalDiff = Math.max(0, rec.icaDiff) + Math.max(0, rec.seeDiff);
@@ -64,48 +64,58 @@ export function ApplyPlanModal({
             return (
               <div
                 key={rec.subjectId}
-                className="p-3 flex items-center justify-between text-xs hover:bg-[var(--bg-surface)]/50"
+                className="p-3 flex items-center justify-between gap-3 text-xs"
               >
-                <div>
-                  <div className="font-semibold text-[var(--text-primary)]">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-semibold text-primary truncate">
                     {rec.subjectName}
                   </div>
-                  <div className="text-[11px] text-[var(--text-secondary)] font-mono">
-                    ICA: {rec.currentIca} → <strong className="text-[var(--primary)]">{rec.recommendedIca}</strong>
+                  <div className="text-[11px] text-secondary font-mono">
+                    ICA: {rec.currentIca} →{" "}
+                    <strong className={rec.icaDiff > 0 ? "text-cyan-500" : ""}>
+                      {rec.recommendedIca}
+                    </strong>
                     {isStandard && (
                       <>
-                        {" | "}SEE: {rec.currentSee} → <strong className="text-[var(--primary)]">{rec.recommendedSee}</strong>
+                        {" "}
+                        | SEE: {rec.currentSee} →{" "}
+                        <strong className={rec.seeDiff > 0 ? "text-cyan-500" : ""}>
+                          {rec.recommendedSee}
+                        </strong>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <GradeBadge grade={rec.expectedGrade} size="sm" />
-                  {totalDiff > 0 && (
-                    <span className="font-mono text-[11px] text-[var(--primary)] font-bold">
-                      +{totalDiff} marks
+                <div className="flex items-center gap-2 shrink-0">
+                  {totalDiff > 0 ? (
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold font-mono bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25">
+                      +{totalDiff}
                     </span>
+                  ) : (
+                    <span className="text-[10px] text-muted">Unchanged</span>
                   )}
+                  <GradeBadge grade={rec.expectedGrade} size="sm" />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-          <Button variant="outline" size="sm" onClick={onClose}>
+        {/* Buttons */}
+        <div className="pt-2 flex items-center justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Cancel
           </Button>
           <Button
             size="sm"
+            variant="glow"
             onClick={() => {
               onConfirm();
               onClose();
             }}
           >
-            <Check className="w-4 h-4 mr-1.5" />
-            Confirm & Apply Plan
+            <Check className="w-3.5 h-3.5 mr-1" /> Confirm &amp; Apply
           </Button>
         </div>
       </div>
