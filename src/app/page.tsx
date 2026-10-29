@@ -23,11 +23,15 @@ import {
   X,
   Trash2,
   ChevronDown,
+  AlertCircle,
+  Plus,
+  CheckCircle2,
 } from 'lucide-react';
 import { generateAcademicPdf } from '../lib/pdf-export';
-import { BranchSemesterModal, BRANCHES } from '../components/branch-semester-modal';
+import { BranchSemesterModal } from '../components/branch-semester-modal';
+import { BATCHES, BRANCHES, getCurriculum } from '../lib/srb-database';
 
-const APP_RELEASE_VERSION = 'v2_branch_curriculum_release';
+const APP_RELEASE_VERSION = 'v3_srb_batch_release';
 
 export default function AcademicHudPage() {
   // Theme state: defaults to off-white 'light'
@@ -47,9 +51,11 @@ export default function AcademicHudPage() {
       if (storedVersion !== APP_RELEASE_VERSION) {
         localStorage.removeItem('nmims_user_courses');
         localStorage.removeItem('nmims_hud_courses');
+        localStorage.removeItem('nmims_user_batch');
         localStorage.removeItem('nmims_user_branch');
         localStorage.removeItem('nmims_user_semester');
         localStorage.removeItem('nmims_gpa_calculator_v1');
+        localStorage.removeItem('nmims_gpa_calculator_v2');
         localStorage.setItem('nmims_app_version', APP_RELEASE_VERSION);
         return [];
       }
@@ -95,7 +101,16 @@ export default function AcademicHudPage() {
   const [showScaleModal, setShowScaleModal] = useState<boolean>(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
 
-  // Branch & Semester state
+  // Batch, Branch & Semester state
+  const [batch, setBatch] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const storedVersion = localStorage.getItem('nmims_app_version');
+      if (storedVersion !== APP_RELEASE_VERSION) return '2026';
+      return localStorage.getItem('nmims_user_batch') || '2026';
+    }
+    return '2026';
+  });
+
   const [branch, setBranch] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const storedVersion = localStorage.getItem('nmims_app_version');
@@ -128,12 +143,15 @@ export default function AcademicHudPage() {
         // App update: reset all preferences
         localStorage.removeItem('nmims_user_courses');
         localStorage.removeItem('nmims_hud_courses');
+        localStorage.removeItem('nmims_user_batch');
         localStorage.removeItem('nmims_user_branch');
         localStorage.removeItem('nmims_user_semester');
         localStorage.removeItem('nmims_gpa_calculator_v1');
+        localStorage.removeItem('nmims_gpa_calculator_v2');
         localStorage.setItem('nmims_app_version', APP_RELEASE_VERSION);
 
         setCourses([]);
+        setBatch('2026');
         setBranch('');
         setSemester(1);
         setShowBranchModal(true);
@@ -151,16 +169,47 @@ export default function AcademicHudPage() {
     [branch]
   );
 
-  const handleBranchSemesterSelect = (selectedBranch: string, selectedSemester: number) => {
+  const currentBatchObj = useMemo(
+    () => BATCHES.find((b) => b.id === batch),
+    [batch]
+  );
+
+  const handleBatchBranchSemesterSelect = (
+    selectedBatch: string,
+    selectedBranch: string,
+    selectedSemester: number
+  ) => {
+    setBatch(selectedBatch);
     setBranch(selectedBranch);
     setSemester(selectedSemester);
     if (typeof window !== 'undefined') {
+      localStorage.setItem('nmims_user_batch', selectedBatch);
       localStorage.setItem('nmims_user_branch', selectedBranch);
       localStorage.setItem('nmims_user_semester', selectedSemester.toString());
     }
+
+    // Load official SRB courses from the srb-database
+    const srbCourses = getCurriculum(selectedBatch, selectedBranch, selectedSemester);
+    if (srbCourses && srbCourses.length > 0) {
+      const loadedCourses: Course[] = srbCourses.map((s, idx) => ({
+        id: `c-${selectedBatch}-${selectedBranch}-s${selectedSemester}-${idx}-${Date.now()}`,
+        code: s.code,
+        name: s.name,
+        type: s.type,
+        credits: s.credits,
+        icaMarks: s.type === 'ica_only' ? 40 : 35,
+        seeMarks: s.type === 'ica_only' ? 0 : 65,
+        isLocked: false,
+      }));
+      setCourses(loadedCourses);
+    }
+
     setShowBranchModal(false);
-    const branchName = BRANCHES.find((b) => b.id === selectedBranch)?.code || selectedBranch.toUpperCase();
-    showToast(`Selected ${branchName} · Semester ${selectedSemester}`);
+    const branchObj = BRANCHES.find((b) => b.id === selectedBranch);
+    const branchName = branchObj ? branchObj.code : selectedBranch.toUpperCase();
+    const batchObj = BATCHES.find((b) => b.id === selectedBatch);
+    const batchName = batchObj ? batchObj.label : `Batch ${selectedBatch}`;
+    showToast(`Loaded ${batchName} · ${branchName} · Semester ${selectedSemester}`);
   };
 
   // Sync theme to document and persist locally
@@ -246,6 +295,12 @@ export default function AcademicHudPage() {
     setCourses((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  // Toast notification helper
+  const showToast = useCallback((msg: string) => {
+    setCopyToast(msg);
+    setTimeout(() => setCopyToast(null), 3000);
+  }, []);
+
   const handleAddCourse = useCallback(() => {
     const count = courses.length + 1;
     const newCourse: Course = {
@@ -261,6 +316,38 @@ export default function AcademicHudPage() {
     setCourses((prev) => [...prev, newCourse]);
   }, [courses.length]);
 
+  const handleAddCourseraCourse = useCallback(() => {
+    const defaultCredits = [4, 6, 7].includes(semester) ? 2 : 1;
+    const newCourse: Course = {
+      id: `c-coursera-${Date.now()}`,
+      code: `COUR${semester}01`,
+      name: `Coursera Elective (Sem ${semester})`,
+      type: 'ica_only',
+      credits: defaultCredits,
+      icaMarks: 40,
+      seeMarks: 0,
+      isLocked: false,
+    };
+    setCourses((prev) => [...prev, newCourse]);
+    showToast(`Added Coursera Elective (${defaultCredits} credit${defaultCredits > 1 ? 's' : ''}, ICA Only)`);
+  }, [semester, showToast]);
+
+  const handleAddDesignExperience = useCallback(() => {
+    const defaultCredits = semester === 4 ? 1 : 2;
+    const newCourse: Course = {
+      id: `c-desexp-${Date.now()}`,
+      code: `DESEXP${semester}`,
+      name: `Design Experience (Sem ${semester})`,
+      type: 'ica_only',
+      credits: defaultCredits,
+      icaMarks: 40,
+      seeMarks: 0,
+      isLocked: false,
+    };
+    setCourses((prev) => [...prev, newCourse]);
+    showToast(`Added Design Experience (${defaultCredits} credit${defaultCredits > 1 ? 's' : ''}, ICA Only)`);
+  }, [semester, showToast]);
+
   const handleDuplicateCourse = useCallback((id: string) => {
     setCourses((prev) => {
       const target = prev.find((c) => c.id === id);
@@ -272,12 +359,6 @@ export default function AcademicHudPage() {
       };
       return [...prev, copy];
     });
-  }, []);
-
-  // Toast notification helper
-  const showToast = useCallback((msg: string) => {
-    setCopyToast(msg);
-    setTimeout(() => setCopyToast(null), 3000);
   }, []);
 
   // Apply target plan to active course roster
@@ -323,6 +404,7 @@ export default function AcademicHudPage() {
   // Reset to clean empty state (wipes stored data & preferences)
   const handleReset = () => {
     setCourses([]);
+    setBatch('2026');
     setBranch('');
     setSemester(1);
     setActiveScenario('none');
@@ -330,12 +412,13 @@ export default function AcademicHudPage() {
     setShowResetConfirm(false);
     localStorage.removeItem('nmims_user_courses');
     localStorage.removeItem('nmims_hud_courses');
+    localStorage.removeItem('nmims_user_batch');
     localStorage.removeItem('nmims_user_branch');
     localStorage.removeItem('nmims_user_semester');
     localStorage.removeItem('nmims_gpa_calculator_v1');
     localStorage.removeItem('nmims_gpa_calculator_v2');
     setShowBranchModal(true);
-    showToast('Reset all preferences & subjects. Please select your branch & semester!');
+    showToast('Reset all preferences & subjects. Please select your batch, branch & semester!');
   };
 
   const unlockedCount = courses.filter((c) => !c.isLocked).length;
@@ -385,11 +468,12 @@ export default function AcademicHudPage() {
             <button
               onClick={() => setShowBranchModal(true)}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] dark:text-cyan-400 border border-indigo-200/80 dark:border-white/[0.08] text-xs font-semibold transition-all cursor-pointer"
-              title="Change Branch & Semester"
+              title="Change Batch, Branch & Semester"
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>
-                {currentBranchObj ? currentBranchObj.code : (branch ? branch.toUpperCase() : 'Select Branch')}
+                {batch ? `'${batch.slice(-2)} ` : ''}
+                {currentBranchObj ? currentBranchObj.code : (branch ? branch.toUpperCase() : 'Select Curriculum')}
                 {branch ? ` · Sem ${semester}` : ''}
               </span>
               <ChevronDown className="w-3 h-3 opacity-60" />
@@ -484,15 +568,19 @@ export default function AcademicHudPage() {
 
         {/* Active Academic Program Banner */}
         {branch && (
-          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-xs">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.08] text-xs">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-slate-600 dark:text-neutral-400">Curriculum:</span>
+              <span className="px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-cyan-500/10 font-bold text-indigo-700 dark:text-cyan-400 border border-indigo-200/60 dark:border-cyan-500/20">
+                {currentBatchObj?.label || `Batch ${batch}`}
+              </span>
+              <span className="text-slate-300 dark:text-neutral-600">·</span>
               <span className="font-bold text-slate-900 dark:text-white">
                 {currentBranchObj?.name || branch.toUpperCase()}
               </span>
               <span className="text-slate-300 dark:text-neutral-600">·</span>
-              <span className="font-semibold text-indigo-600 dark:text-cyan-400">
+              <span className="font-semibold text-slate-700 dark:text-neutral-300">
                 Semester {semester}
               </span>
             </div>
@@ -500,7 +588,7 @@ export default function AcademicHudPage() {
               onClick={() => setShowBranchModal(true)}
               className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-cyan-400 dark:hover:text-cyan-300 cursor-pointer"
             >
-              Change
+              Change Curriculum ▾
             </button>
           </div>
         )}
@@ -534,7 +622,82 @@ export default function AcademicHudPage() {
           />
         )}
 
-        {/* 3. The Subject Grid / Mobile Cards */}
+        {/* 3. Batch-Specific SRB Guidance & Manual Course Actions */}
+        {batch === '2025' && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 dark:text-amber-200 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5 text-amber-700 dark:text-amber-300">
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+                  Batch 2025–29 Curriculum Notice (2nd Year)
+                </h4>
+                <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed max-w-2xl">
+                  Coursera electives are not listed in the 2025–29 SRB syllabus. If you enrolled in an approved Coursera course this semester, add it to your roster with its designated credits (evaluated strictly as &apos;ICA Only&apos;).
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleAddCourseraCourse}
+              className="self-end sm:self-center shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Add Coursera ({[4, 6, 7].includes(semester) ? '2 cr' : '1 cr'})</span>
+            </button>
+          </div>
+        )}
+
+        {batch === '2024' && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-950 dark:text-cyan-200 animate-in fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0 mt-0.5 text-sky-700 dark:text-cyan-400">
+                <AlertCircle className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-sky-900 dark:text-cyan-300">
+                  Batch 2024–28 Curriculum Notice (3rd &amp; 4th Year)
+                </h4>
+                <p className="text-xs text-sky-800 dark:text-cyan-200/90 leading-relaxed max-w-2xl">
+                  Neither Coursera nor Design Experience are part of the standard 2024–28 SRB document. If your department assigned either course this semester, use the quick shortcuts below to add them (both evaluated as &apos;ICA Only&apos;).
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                onClick={handleAddCourseraCourse}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 dark:bg-cyan-500 dark:hover:bg-cyan-400 dark:text-black active:scale-95 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Coursera ({[4, 6, 7].includes(semester) ? '2 cr' : '1 cr'})</span>
+              </button>
+              <button
+                onClick={handleAddDesignExperience}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Design Exp ({semester === 4 ? '1 cr' : '2 cr'})</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {batch === '2026' && (
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl bg-indigo-50/70 dark:bg-white/[0.03] border border-indigo-200/60 dark:border-white/[0.08] text-xs text-indigo-950 dark:text-neutral-300">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-cyan-400 shrink-0" />
+              <span className="font-semibold text-indigo-900 dark:text-white">Batch 2026–30:</span>
+              <span className="text-slate-600 dark:text-neutral-400">
+                Mandatory Coursera electives and credits are already integrated into your official SRB curriculum as ICA-Only courses.
+              </span>
+            </div>
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-indigo-100/70 dark:bg-cyan-500/10 text-indigo-700 dark:text-cyan-400 font-bold text-[10px] uppercase tracking-wider shrink-0">
+              SRB Verified
+            </span>
+          </div>
+        )}
+
+        {/* 4. The Subject Grid / Mobile Cards */}
         <CommandGrid
           courses={simulatedCourses || courses}
           evaluations={
@@ -629,11 +792,12 @@ export default function AcademicHudPage() {
       {/* Branch & Semester Selector Modal */}
       <BranchSemesterModal
         isOpen={showBranchModal}
+        currentBatch={batch}
         currentBranch={branch}
         currentSemester={semester}
         isDismissable={Boolean(branch)}
         onClose={() => setShowBranchModal(false)}
-        onSelect={handleBranchSemesterSelect}
+        onSelect={handleBatchBranchSemesterSelect}
       />
     </div>
   );
